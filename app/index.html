@@ -9,9 +9,6 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Contrepoint">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 /* Plan : papier à musique gravé. Encre bleu nuit, correction au stylo rouge, validation verte.
    Mise en page : barre d'onglets en haut, un module à la fois, la portée au centre. */
@@ -27,8 +24,8 @@
   --green:#1e7b34;
   --amber:#b7791f;
   --staff:#1c2633;
-  --display:"Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
-  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --display:Verdana, Geneva, "DejaVu Sans", sans-serif;
+  --body:Verdana, Geneva, "DejaVu Sans", sans-serif;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark){
@@ -47,7 +44,7 @@
 html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
 header{background:var(--sheet);border-bottom:1px solid var(--line)}
 .top{max-width:1100px;margin:0 auto;padding:18px 20px 0;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:baseline;justify-content:space-between}
-h1{font-family:var(--display);font-weight:700;font-size:2.1rem;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1{font-family:var(--display);font-weight:700;font-size:1.9rem;letter-spacing:.01em;margin:0;text-wrap:balance}
 h1 em{font-style:italic;font-weight:500;color:var(--accent)}
 .score{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
 .score b{color:var(--ink)}
@@ -615,7 +612,7 @@ function engrave(opt){
       const y=top+4*SP-(p-BOTTOM[st.clef])*H;
       o.push(glyph(k.a===1?'sharp':'flat',kx,y+5,15,ink)); kx+=12;
     });
-    if(st.label) o.push(`<text x="${endX-10}" y="${top-9}" text-anchor="end" font-family="Atkinson Hyperlegible, sans-serif" font-size="11" fill="${muted}">${st.label}</text>`);
+    if(st.label) o.push(`<text x="${endX-10}" y="${top-9}" text-anchor="end" font-family="Verdana, Geneva, DejaVu Sans, sans-serif" font-size="11" fill="${muted}">${st.label}</text>`);
   });
   const sysTop=ys[0], sysBot=ys[ys.length-1]+4*SP;
   o.push(`<line x1="16" y1="${sysTop}" x2="16" y2="${sysBot}" stroke="${ink}" stroke-width="1.3"/>`);
@@ -671,7 +668,7 @@ function engrave(opt){
   });
   (opt.labels||[]).forEach(l=>{
     const x=left+l.t*unit+(l.center?unit*2-6:unit*0.5);
-    o.push(`<text x="${x}" y="${sysBot+(l.dy||34)}" text-anchor="middle" font-family="Atkinson Hyperlegible, sans-serif" font-size="13" font-weight="700" fill="${l.color||muted}">${l.text}</text>`);
+    o.push(`<text x="${x}" y="${sysBot+(l.dy||34)}" text-anchor="middle" font-family="Verdana, Geneva, DejaVu Sans, sans-serif" font-size="13" font-weight="700" fill="${l.color||muted}">${l.text}</text>`);
   });
   const Ht=sysBot+(opt.bottom||46);
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*(opt.zoom||1.7))}px" width="${W}" height="${Ht}" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${opt.aria||'Portée'}">${o.join('')}</svg>`;
