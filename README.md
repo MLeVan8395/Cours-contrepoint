@@ -51,7 +51,14 @@ Auteur : Mickael Le Van, professeur de musiques actuelles et jazz.
 - **Intervalles** et **Mouvements** : exercices d'identification générés au hasard, avec le son.
 - **Réponse de fugue** : choisir la bonne réponse (réelle ou tonale) parmi trois propositions.
 
-Les scores sont gardés dans le navigateur de l'élève.
+Les scores sont gardés dans le navigateur de l'élève. Le son (piano ou orgue) se choisit en haut de l'écran.
+
+### Installer l'application sur un téléphone
+
+L'application est installable (PWA) et fonctionne ensuite hors connexion.
+
+- **Android (Chrome)** : ouvrir https://mlevan8395.github.io/Cours-contrepoint/app/, puis menu ⋮ → **Installer l'application** (ou **Ajouter à l'écran d'accueil**).
+- **iPhone / iPad (Safari)** : ouvrir la même adresse, puis bouton **Partager** → **Sur l'écran d'accueil**.
 
 Pour la mettre en ligne gratuitement : dans les réglages du dépôt, **Settings → Pages**, choisir la branche `main` et le dossier `/ (root)`. L'application sera alors accessible à l'adresse `https://mlevan8395.github.io/Cours-contrepoint/app/`.
 

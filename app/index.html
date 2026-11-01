@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Atelier de contrepoint</title>
+<meta name="theme-color" content="#1f4e8c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Contrepoint">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -105,7 +110,7 @@ button:disabled{opacity:.55;cursor:default}
 <header>
   <div class="top">
     <h1>Atelier de <em>contrepoint</em></h1>
-    <div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div>
+    <div class="row" style="gap:14px"><label for="soundSel" class="meta">Son</label><select id="soundSel"><option value="piano">Piano</option><option value="orgue">Orgue</option></select><div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div></div>
   </div>
   <nav id="tabs" aria-label="Modules">
     <a href="#espece">Écrire en 1re espèce</a>
@@ -471,15 +476,58 @@ function engrave(opt){
 let AC=null;
 function audio(){ try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC;}catch(e){return null;} }
 function hz(n){return 440*Math.pow(2,(midi(n)-69)/12);}
-function playNotes(list){ // [{n,t,d}] t,d en secondes
-  const ac=audio(); if(!ac) return; const t0=ac.currentTime+0.05;
-  list.forEach(x=>{
-    const o=ac.createOscillator(), g=ac.createGain();
-    o.type='triangle'; o.frequency.value=hz(x.n);
-    const a=t0+x.t, e=a+x.d;
-    g.gain.setValueAtTime(0,a); g.gain.linearRampToValueAtTime(0.18,a+0.02); g.gain.exponentialRampToValueAtTime(0.06,a+Math.min(0.4,x.d*0.6)); g.gain.linearRampToValueAtTime(0.0001,e);
-    o.connect(g).connect(ac.destination); o.start(a); o.stop(e+0.05);
+let SOUND='piano';
+try{SOUND=localStorage.getItem('atelier-contrepoint-son')||'piano';}catch(e){}
+let MASTER=null;
+function master(ac){
+  if(MASTER) return MASTER;
+  const comp=ac.createDynamicsCompressor(); comp.threshold.value=-18; comp.ratio.value=4;
+  const g=ac.createGain(); g.gain.value=0.8; g.connect(comp); comp.connect(ac.destination);
+  // petite réverbération synthétique
+  const len=Math.floor(ac.sampleRate*1.6), ir=ac.createBuffer(2,len,ac.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}
+  const conv=ac.createConvolver(); conv.buffer=ir; const wet=ac.createGain(); wet.gain.value=0.18;
+  const bus=ac.createGain(); bus.connect(g); bus.connect(conv); conv.connect(wet); wet.connect(g);
+  MASTER=bus; return bus;
+}
+function pianoNote(ac,out,f,a,dur){
+  const partials=[[1,1],[2,0.45],[3,0.22],[4,0.12],[5,0.07],[6,0.04],[7,0.02]];
+  const B=0.0004; // légère inharmonicité des cordes
+  const env=ac.createGain(); const lp=ac.createBiquadFilter(); lp.type='lowpass';
+  lp.frequency.setValueAtTime(Math.min(9000,f*9),a); lp.frequency.exponentialRampToValueAtTime(Math.max(400,f*2),a+1.8);
+  const decay=Math.max(1.2,4.5-Math.log2(f/110)); // les notes graves sonnent plus longtemps
+  const end=a+Math.max(dur,0.25)+0.35;
+  env.gain.setValueAtTime(0,a); env.gain.linearRampToValueAtTime(0.32,a+0.006);
+  env.gain.setTargetAtTime(0.0001,a+0.01,decay/5);
+  env.gain.setTargetAtTime(0.0001,a+Math.max(dur,0.25),0.09);
+  partials.forEach(([k,amp])=>{
+    const o=ac.createOscillator(), g=ac.createGain(); o.type='sine';
+    o.frequency.value=f*k*Math.sqrt(1+B*k*k);
+    g.gain.setValueAtTime(amp,a); g.gain.setTargetAtTime(amp*0.2,a+0.02,decay/(2+k));
+    o.connect(g).connect(lp); o.start(a); o.stop(end+0.1);
   });
+  // attaque du marteau
+  const nb=ac.createBuffer(1,Math.floor(ac.sampleRate*0.03),ac.sampleRate); const nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=(Math.random()*2-1)*(1-i/nd.length);
+  const ns=ac.createBufferSource(); ns.buffer=nb; const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f*4; const ng=ac.createGain(); ng.gain.value=0.05;
+  ns.connect(bp).connect(ng).connect(env); ns.start(a);
+  lp.connect(env).connect(out);
+}
+function organNote(ac,out,f,a,dur){
+  // jeux de fond : 8', 4', 2 2/3', 2'
+  const stops=[[1,0.55],[2,0.32],[3,0.16],[4,0.12],[0.5,0.18]];
+  const env=ac.createGain(); const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=Math.min(7000,f*10);
+  const end=a+Math.max(dur,0.2);
+  env.gain.setValueAtTime(0,a); env.gain.linearRampToValueAtTime(0.16,a+0.05); env.gain.setValueAtTime(0.16,end); env.gain.linearRampToValueAtTime(0.0001,end+0.12);
+  stops.forEach(([k,amp])=>{const o=ac.createOscillator(), g=ac.createGain(); o.type=k===1?'triangle':'sine'; o.frequency.value=f*k; g.gain.value=amp; o.connect(g).connect(lp); o.start(a); o.stop(end+0.2);});
+  // léger souffle
+  const nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate), nd=nb.getChannelData(0); for(let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1;
+  const ns=ac.createBufferSource(); ns.buffer=nb; ns.loop=true; const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f*2; bp.Q.value=8; const ng=ac.createGain(); ng.gain.value=0.012;
+  ns.connect(bp).connect(ng).connect(env); ns.start(a); ns.stop(end+0.2);
+  lp.connect(env).connect(out);
+}
+function playNotes(list){ // [{n,t,d}] t,d en secondes
+  const ac=audio(); if(!ac) return; const t0=ac.currentTime+0.05; const out=master(ac);
+  list.forEach(x=>{ const f=hz(x.n); if(SOUND==='orgue') organNote(ac,out,f,t0+x.t,x.d); else pianoNote(ac,out,f,t0+x.t,x.d); });
 }
 // ---- Scores ----
 const STORE='atelier-contrepoint-v1';
@@ -782,6 +830,7 @@ function route(){
   document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
 }
 function start(){
+  $('soundSel').value=SOUND; $('soundSel').onchange=e=>{SOUND=e.target.value; try{localStorage.setItem('atelier-contrepoint-son',SOUND);}catch(_){} playNotes([{n:N('Do4'),t:0,d:0.8},{n:N('Mi4'),t:0,d:0.8},{n:N('Sol4'),t:0,d:0.8}]);};
   $('cfSelect').innerHTML=BANK.map(b=>`<option value="${b.id}">${b.titre}</option>`).join('');
   $('cfSelect').onchange=e=>loadCF(e.target.value);
   loadCF(BANK[0].id);
@@ -804,6 +853,7 @@ function start(){
   try{ new MutationObserver(()=>{drawSpecies();drawE2();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
 }
 start();
+try{ if('serviceWorker' in navigator && location.protocol==='https:' && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
 </script>
 </body>
 </html>
