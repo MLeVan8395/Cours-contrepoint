@@ -96,6 +96,7 @@ button:disabled{opacity:.55;cursor:default}
 .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
 .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;background:currentColor}
 .l-cf{color:var(--muted)} .l-cp{color:var(--accent)} .l-err{color:var(--red)} .l-ok{color:var(--green)}
+.installhelp{max-width:1100px;margin:0 auto;padding:12px 20px 16px}
 .home{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:6px}
 .home a{display:block;text-decoration:none;color:inherit;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .home a:hover{border-color:var(--accent)}
@@ -110,7 +111,7 @@ button:disabled{opacity:.55;cursor:default}
 <header>
   <div class="top">
     <h1>Atelier de <em>contrepoint</em></h1>
-    <div class="row" style="gap:14px"><label for="soundSel" class="meta">Son</label><select id="soundSel"><option value="piano">Piano</option><option value="orgue">Orgue</option></select><div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div></div>
+    <div class="row" style="gap:14px"><button type="button" id="install" class="primary">Installer l'appli</button><label for="soundSel" class="meta">Son</label><select id="soundSel"><option value="piano">Piano</option><option value="orgue">Orgue</option></select><div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div></div>
   </div>
   <nav id="tabs" aria-label="Modules">
     <a href="#espece">Écrire en 1re espèce</a>
@@ -120,6 +121,18 @@ button:disabled{opacity:.55;cursor:default}
     <a href="#mouvements">Mouvements</a>
     <a href="#reponse">Réponse de fugue</a>
   </nav>
+  <div id="installHelp" class="installhelp" hidden>
+    <div class="card">
+      <h4 style="margin:0 0 6px">Installer l'Atelier de contrepoint sur ton appareil</h4>
+      <p class="meta" id="installWhere" style="margin:0 0 8px"></p>
+      <ul style="margin:0;padding-left:20px;display:grid;gap:6px">
+        <li><b>iPhone / iPad</b> : ouvre l'appli dans <b>Safari</b>, touche le bouton <b>Partager</b> (carré avec une flèche vers le haut), puis <b>Sur l'écran d'accueil</b> et <b>Ajouter</b>.</li>
+        <li><b>Android</b> : ouvre l'appli dans <b>Chrome</b>, touche le menu <b>⋮</b>, puis <b>Installer l'application</b> ou <b>Ajouter à l'écran d'accueil</b>.</li>
+        <li><b>Ordinateur</b> : dans Chrome ou Edge, clique sur l'icône d'installation à droite de la barre d'adresse.</li>
+      </ul>
+      <div class="row" style="margin-top:10px"><button type="button" id="installClose" class="ghost">Fermer</button></div>
+    </div>
+  </div>
 </header>
 <main>
 
@@ -854,6 +867,18 @@ function start(){
 }
 start();
 try{ if('serviceWorker' in navigator && location.protocol==='https:' && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){}
+// Bouton « Installer l'appli » : installation directe quand le navigateur la propose, sinon mode d'emploi
+(function(){
+  let ask=null; const btn=$('install'), help=$('installHelp');
+  const standalone=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}catch(e){return false;}};
+  if(standalone()) btn.hidden=true;
+  const onPages=/github\.io$/.test(location.hostname);
+  $('installWhere').innerHTML=onPages?'Ton navigateur ne propose pas l\'installation automatique : suis la méthode de ton appareil.':'L\'installation se fait depuis la version en ligne : <a href="https://mlevan8395.github.io/Cours-contrepoint/app/">mlevan8395.github.io/Cours-contrepoint/app</a> (copie cette adresse dans Safari ou Chrome).';
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(); ask=e;});
+  btn.onclick=async()=>{ if(ask){ask.prompt(); try{await ask.userChoice;}catch(e){} ask=null; return;} help.hidden=!help.hidden; };
+  $('installClose').onclick=()=>{help.hidden=true;};
+  window.addEventListener('appinstalled',()=>{btn.hidden=true; help.hidden=true;});
+})();
 </script>
 </body>
 </html>
