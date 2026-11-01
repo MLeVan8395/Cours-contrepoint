@@ -44,7 +44,7 @@ Auteur : Mickael Le Van, professeur de musiques actuelles et jazz.
 
 ## L'application interactive
 
-`app/index.html` est une page web autonome : on peut l'ouvrir dans un navigateur, sans installation. Elle propose :
+`app/index.html` est une page web : elle contient **tout le cours** (onglet « Cours », 21 leçons avec leurs partitions) et des exercices interactifs. Elle propose :
 
 - **Écrire en 1re espèce** et **Écrire en 2e espèce** : l'élève place ses notes au-dessus d'un cantus firmus (8 cantus au choix) et l'application corrige automatiquement, mesure par mesure (consonances, 5tes et 8ves parallèles, notes de passage, cadence…), avec une solution pour chaque cantus.
 - **Quiz de cours** : 25 questions sur l'ensemble du cours, avec explications.
