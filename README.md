@@ -46,7 +46,8 @@ Auteur : Mickael Le Van, professeur de musiques actuelles et jazz.
 
 `app/index.html` est une page web : elle contient **tout le cours** (onglet « Cours », 21 leçons avec leurs partitions) et des exercices interactifs. Elle propose :
 
-- **Écrire en 1re espèce** et **Écrire en 2e espèce** : l'élève place ses notes au-dessus d'un cantus firmus (8 cantus au choix) et l'application corrige automatiquement, mesure par mesure (consonances, 5tes et 8ves parallèles, notes de passage, cadence…), avec une solution pour chaque cantus.
+- **Écrire en 1re, 2e, 3e et 4e espèce** : l'élève place ses notes au-dessus d'un cantus firmus (8 cantus au choix) et l'application corrige automatiquement, mesure par mesure (consonances, 5tes et 8ves parallèles, notes de passage, broderies, retards et leur résolution, cadence…), avec une solution proposée.
+- **Analyser une fugue** : 19 extraits (Bach : Invention n°1, fugues BWV 855, 847, 846 ; canon à l'écrevisse ; transformations d'un motif). Un passage est marqué d'un crochet « ? » : sujet, réponse, contre-sujet, miroir, rétrograde, augmentation, divertissement, strette, pédale… Chaque réponse est expliquée.
 - **Quiz de cours** : 25 questions sur l'ensemble du cours, avec explications.
 - **Intervalles** et **Mouvements** : exercices d'identification générés au hasard, avec le son.
 - **Réponse de fugue** : choisir la bonne réponse (réelle ou tonale) parmi trois propositions.
