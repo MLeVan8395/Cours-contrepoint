@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier de contrepoint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* Plan : papier à musique gravé. Encre bleu nuit, correction au stylo rouge, validation verte.
+   Mise en page : barre d'onglets en haut, un module à la fois, la portée au centre. */
+:root{
+  --paper:#f4f6f8;
+  --sheet:#ffffff;
+  --ink:#1c2633;
+  --muted:#5d6b7c;
+  --line:#cfd6df;
+  --accent:#1f4e8c;
+  --accent-soft:#e3ecf7;
+  --red:#c0392b;
+  --green:#1e7b34;
+  --amber:#b7791f;
+  --staff:#1c2633;
+  --display:"Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#11161d; --sheet:#1a212b; --ink:#e7edf4; --muted:#9aa8b8; --line:#2f3a48;
+    --accent:#8cb4ee; --accent-soft:#22324a; --red:#ff7a6b; --green:#6fd08a; --amber:#f0b45a; --staff:#dfe6ee;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#11161d; --sheet:#1a212b; --ink:#e7edf4; --muted:#9aa8b8; --line:#2f3a48;
+  --accent:#8cb4ee; --accent-soft:#22324a; --red:#ff7a6b; --green:#6fd08a; --amber:#f0b45a; --staff:#dfe6ee;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5}
+header{background:var(--sheet);border-bottom:1px solid var(--line)}
+.top{max-width:1100px;margin:0 auto;padding:18px 20px 0;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:baseline;justify-content:space-between}
+h1{font-family:var(--display);font-weight:700;font-size:2.1rem;letter-spacing:.01em;margin:0;text-wrap:balance}
+h1 em{font-style:italic;font-weight:500;color:var(--accent)}
+.score{font-size:.9rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.score b{color:var(--ink)}
+nav{max-width:1100px;margin:0 auto;padding:10px 20px 0;display:flex;gap:4px;overflow-x:auto}
+nav a{flex:0 0 auto;padding:10px 14px 12px;color:var(--muted);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;font-size:.95rem}
+nav a[aria-current="page"]{color:var(--accent);border-bottom-color:var(--accent)}
+nav a:hover{color:var(--ink)}
+nav a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+main{max-width:1100px;margin:0 auto;padding:22px 20px 60px}
+.panel{display:none}
+.panel.on{display:block}
+h2{font-family:var(--display);font-weight:700;font-size:1.6rem;margin:0 0 4px;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 18px;max-width:68ch}
+.card{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:grid;gap:16px}
+button,select{font:inherit;font-size:.95rem;border-radius:8px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);padding:9px 14px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--sheet);font-weight:700}
+button.ghost{background:transparent}
+button.choice{min-width:92px}
+button.ok{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--green)}
+button.ko{border-color:var(--red);box-shadow:inset 0 0 0 2px var(--red)}
+button:disabled{opacity:.55;cursor:default}
+.staffwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--sheet);padding:6px 4px}
+.staffwrap svg{display:block}
+.fb{margin-top:14px;padding:12px 16px;border-radius:8px;border-left:5px solid var(--line);background:var(--paper);min-height:1.5em}
+.fb.good{border-left-color:var(--green)}
+.fb.bad{border-left-color:var(--red)}
+.fb.info{border-left-color:var(--accent)}
+.fb h4{margin:0 0 4px;font-size:1rem}
+.issues{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:6px}
+.issues li{display:flex;gap:10px;align-items:baseline}
+.pill{flex:0 0 auto;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:99px;border:1px solid}
+.pill.erreur{color:var(--red);border-color:var(--red)}
+.pill.conseil{color:var(--amber);border-color:var(--amber)}
+.meta{font-size:.85rem;color:var(--muted)}
+.qtext{font-size:1.15rem;font-weight:700;margin:4px 0 14px;max-width:68ch}
+.opts{display:grid;gap:8px;max-width:680px}
+.opts button{text-align:left;padding:12px 14px}
+.progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 16px;max-width:680px}
+.progress i{display:block;height:100%;background:var(--accent);width:0}
+.cands{display:grid;gap:12px}
+.cand{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.cand button{width:52px;height:52px;font-family:var(--display);font-size:1.4rem;font-weight:700;padding:0}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;background:currentColor}
+.l-cf{color:var(--muted)} .l-cp{color:var(--accent)} .l-err{color:var(--red)} .l-ok{color:var(--green)}
+.home{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:6px}
+.home a{display:block;text-decoration:none;color:inherit;background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.home a:hover{border-color:var(--accent)}
+.home b{font-family:var(--display);font-size:1.15rem;display:block}
+.home small{color:var(--muted)}
+.home .stat{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700;font-size:.85rem}
+@media (max-width:520px){h1{font-size:1.6rem}.card{padding:14px}}
+@media (prefers-reduced-motion:no-preference){.progress i{transition:width .3s ease}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Atelier de <em>contrepoint</em></h1>
+    <div class="score" id="globalScore">Réponses justes : <b>0</b> sur <b>0</b></div>
+  </div>
+  <nav id="tabs" aria-label="Modules">
+    <a href="#espece">Écrire en 1re espèce</a>
+    <a href="#espece2">Écrire en 2e espèce</a>
+    <a href="#quiz">Quiz de cours</a>
+    <a href="#intervalles">Intervalles</a>
+    <a href="#mouvements">Mouvements</a>
+    <a href="#reponse">Réponse de fugue</a>
+  </nav>
+</header>
+<main>
+
+<section class="panel" id="p-espece" aria-labelledby="h-espece">
+  <h2 id="h-espece">Écrire un contrepoint note contre note</h2>
+  <p class="lead">Clique sur la portée du haut pour placer une ronde au-dessus de chaque note du cantus firmus. Clique de nouveau sur une note pour changer son altération (♯, ♭, ♮). Puis vérifie : chaque faute est signalée en rouge, mesure par mesure.</p>
+  <div class="stack">
+    <div class="row">
+      <label for="cfSelect" class="meta">Cantus firmus</label>
+      <select id="cfSelect"></select>
+      <button id="btnPlay" class="ghost" type="button">▶ Écouter</button>
+      <button id="btnUndo" class="ghost" type="button">Effacer la dernière note</button>
+      <button id="btnClear" class="ghost" type="button">Tout effacer</button>
+    </div>
+    <div class="staffwrap" id="speciesStaff"></div>
+    <div class="legend"><span class="l-cf">cantus firmus</span><span class="l-cp">ton contrepoint</span><span class="l-err">faute</span><span class="l-ok">mesure correcte</span></div>
+    <div class="row">
+      <button id="btnCheck" class="primary" type="button">Vérifier</button>
+      <button id="btnSolution" class="ghost" type="button">Voir une solution</button>
+    </div>
+    <div class="fb info" id="speciesFb">Commence par la fin : une 8ve sur la dernière note, une 6te majeure juste avant. Puis le début (8ve ou 5te).</div>
+  </div>
+</section>
+
+
+<section class="panel" id="p-espece2" aria-labelledby="h-espece2">
+  <h2 id="h-espece2">Écrire un contrepoint en blanches (2e espèce)</h2>
+  <p class="lead">Place deux blanches par mesure : clique dans la moitié gauche d'une mesure pour le 1er temps, dans la moitié droite pour le temps faible. Les deux dernières mesures prennent une ronde. Les temps forts doivent être consonants ; au temps faible, une dissonance est permise si c'est une note de passage.</p>
+  <div class="stack">
+    <div class="row">
+      <label for="cfSelect2" class="meta">Cantus firmus</label>
+      <select id="cfSelect2"></select>
+      <button id="btnPlay2" class="ghost" type="button">▶ Écouter</button>
+      <button id="btnUndo2" class="ghost" type="button">Effacer la dernière note</button>
+      <button id="btnClear2" class="ghost" type="button">Tout effacer</button>
+    </div>
+    <div class="staffwrap" id="speciesStaff2"></div>
+    <div class="legend"><span class="l-cf">cantus firmus</span><span class="l-cp">ton contrepoint</span><span class="l-err">faute</span><span class="l-ok">mesure correcte</span></div>
+    <div class="row">
+      <button id="btnCheck2" class="primary" type="button">Vérifier</button>
+      <button id="btnSolution2" class="ghost" type="button">Voir une solution</button>
+    </div>
+    <div class="fb info" id="speciesFb2">Méthode : écris d'abord les temps forts comme en 1re espèce (consonances, pas de 5tes ni d'8ves consécutives), puis relie-les par des notes de passage.</div>
+  </div>
+</section>
+
+<section class="panel" id="p-quiz" aria-labelledby="h-quiz">
+  <h2 id="h-quiz">Quiz de cours</h2>
+  <p class="lead">Questions sur tout le cours : espèces, imitation, fugue, miroir. Chaque réponse est expliquée.</p>
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><span class="meta" id="qCount"></span><button id="qRestart" class="ghost" type="button">Recommencer (ordre mélangé)</button></div>
+    <div class="progress"><i id="qBar"></i></div>
+    <div class="qtext" id="qText"></div>
+    <div class="opts" id="qOpts"></div>
+    <div class="fb" id="qFb" hidden></div>
+    <div class="row" style="margin-top:14px"><button id="qNext" class="primary" type="button" hidden>Question suivante</button></div>
+  </div>
+</section>
+
+<section class="panel" id="p-intervalles" aria-labelledby="h-int">
+  <h2 id="h-int">Reconnaître les intervalles</h2>
+  <p class="lead">Nomme l'intervalle entre les deux notes. La réponse indique aussi sa famille : consonance parfaite, consonance imparfaite ou dissonance.</p>
+  <div class="card stack">
+    <div class="staffwrap" id="intStaff"></div>
+    <div class="row"><button id="intPlay" class="ghost" type="button">▶ Écouter</button><span class="meta" id="intScore"></span></div>
+    <div class="row" id="intOpts"></div>
+    <div class="fb" id="intFb" hidden></div>
+    <div class="row"><button id="intNext" class="primary" type="button">Nouvel intervalle</button></div>
+  </div>
+</section>
+
+<section class="panel" id="p-mouvements" aria-labelledby="h-mv">
+  <h2 id="h-mv">Reconnaître les mouvements</h2>
+  <p class="lead">Quel mouvement relie les deux intervalles ? Ensuite, dis si l'enchaînement est autorisé en contrepoint strict.</p>
+  <div class="card stack">
+    <div class="staffwrap" id="mvStaff"></div>
+    <div class="row"><button id="mvPlay" class="ghost" type="button">▶ Écouter</button><span class="meta" id="mvScore"></span></div>
+    <div class="row" id="mvOpts"></div>
+    <div class="row" id="mvOpts2" hidden></div>
+    <div class="fb" id="mvFb" hidden></div>
+    <div class="row"><button id="mvNext" class="primary" type="button">Nouvel exemple</button></div>
+  </div>
+</section>
+
+<section class="panel" id="p-reponse" aria-labelledby="h-rep">
+  <h2 id="h-rep">Trouver la réponse d'un sujet de fugue</h2>
+  <p class="lead">Voici un sujet. Laquelle des trois propositions est la bonne réponse ? Pense à la règle : si le sujet commence par la dominante ou fait un saut tonique-dominante au début, la réponse est tonale.</p>
+  <div class="card stack">
+    <div class="row" style="justify-content:space-between"><span class="meta" id="repCount"></span><button id="repPlay" class="ghost" type="button">▶ Écouter le sujet</button></div>
+    <div class="staffwrap" id="repSubject"></div>
+    <div class="cands" id="repCands"></div>
+    <div class="fb" id="repFb" hidden></div>
+    <div class="row"><button id="repNext" class="primary" type="button">Sujet suivant</button></div>
+  </div>
+</section>
+
+</main>
+<script>
+const GLYPH={"treble": {"d": "M434 2Q464 -103 464 -170Q464 -223 427.0 -257.0Q390 -291 337 -291Q287 -291 250.0 -261.5Q213 -232 213 -190Q213 -160 233.5 -133.5Q254 -107 283.5 -107.0Q313 -107 331.5 -128.5Q350 -150 350 -178Q350 -240 280 -240Q298 -268 338 -268Q353 -268 368.5 -263.5Q384 -259 401.0 -248.0Q418 -237 428.5 -213.5Q439 -190 439 -157Q439 -136 411 -6Q389 -12 356 -12Q259 -12 189.5 60.0Q120 132 120 232Q120 267 131.5 303.0Q143 339 157.5 366.5Q172 394 200.5 428.5Q229 463 248.5 483.5Q268 504 303 539Q280 621 280 689Q280 779 313.0 839.5Q346 900 379 900Q389 900 401.5 887.0Q414 874 426.0 851.0Q438 828 446.5 790.5Q455 753 455 710Q455 551 342 447L368 329Q384 332 397 332Q458 332 500.0 282.5Q542 233 542 162Q542 44 434 2ZM426 746Q426 801 394 801Q358 801 333.0 748.0Q308 695 308 630Q308 588 321 557Q359 580 392.5 639.5Q426 699 426 746ZM498 128Q498 183 466.0 216.0Q434 249 383 249L428 23Q498 52 498 128ZM407 17 361 247Q334 241 311.5 214.0Q289 187 289 158Q289 143 295.0 128.5Q301 114 309.5 104.0Q318 94 327.0 86.0Q336 78 342.0 74.5Q348 71 348 71L340 66Q307 75 277.5 106.0Q248 137 248 184Q248 231 277.5 270.5Q307 310 343 323L325 430Q168 299 168 177Q168 104 223.0 55.0Q278 6 348 6Q365 6 407 17Z", "upm": 1000}, "bass": {"d": "M564 704Q582 704 594.5 691.0Q607 678 607.0 661.0Q607 644 593.0 631.0Q579 618 563 618Q521 618 521 663Q521 681 534.0 692.5Q547 704 564 704ZM607 469Q607 450 594.0 437.0Q581 424 564 424Q521 424 521 469Q521 485 533.5 498.0Q546 511 564.0 511.0Q582 511 594.5 497.0Q607 483 607 469ZM285 757Q366 757 421.0 701.5Q476 646 476 569Q476 531 465.5 495.0Q455 459 432.0 426.5Q409 394 386.0 367.0Q363 340 326.0 313.0Q289 286 264.0 267.5Q239 249 196.5 226.0Q154 203 135.5 193.5Q117 184 80 166L75 182Q76 183 102.0 200.0Q128 217 144.0 227.5Q160 238 191.5 263.0Q223 288 244.0 309.5Q265 331 291.5 363.5Q318 396 334.0 427.0Q350 458 361.5 498.0Q373 538 373 578Q373 735 262 735Q225 735 199.0 725.5Q173 716 161.5 702.0Q150 688 145.0 677.5Q140 667 140 659Q140 644 160 644Q168 644 179.0 647.5Q190 651 194 651Q221 651 239.0 634.0Q257 617 257 592Q257 563 235.0 544.0Q213 525 183 525Q144 525 119.0 548.0Q94 571 94 607Q94 673 150.5 715.0Q207 757 285 757Z", "upm": 1000}, "qrest": {"d": "M55 208Q55 242 77.5 260.0Q100 278 130 278Q150 278 178 267L65 415Q145 487 145 544Q145 589 91 658H136L264 502Q181 404 181 356Q181 310 259 217L243 194Q203 217 176 217Q140 217 140.0 173.0Q140 129 179 84L165 62Q55 144 55 208Z", "upm": 1000}, "erest": {"d": "M136 443Q152 443 175.0 466.5Q198 490 213 511H234L138 166H101L173 426Q126 402 97.0 402.0Q68 402 43.5 422.5Q19 443 19 473Q19 495 35.0 513.5Q51 532 79 532Q106 532 122.0 513.5Q138 495 138 473Q138 458 131 445Q135 443 136 443Z", "upm": 1000}, "sharp": {"d": "M647 1497H693L698 1492V1188L817 1248L820 1246V1105Q817 1098 698 1038V665L820 720V585Q819 581 698 514V217L693 213H647L642 217V490L354 350V4L349 0H307L302 4V325L173 265V407Q173 413 302 473V852H300L173 796V935L302 1000V1287L307 1291H349L354 1287V1025L642 1159V1492ZM354 874V497L642 636V1008Z", "upm": 2048}, "flat": {"d": "M187 1497H232L237 1491V530H240Q410 767 555 767Q782 764 802 507Q773 82 184 -6L181 -3V1491ZM237 423V68Q655 167 655 472Q656 485 656 497Q656 645 507 653Q388 653 237 423Z", "upm": 2048}, "natural": {"d": "M177 1497H218L224 1492V1027L558 1188L560 1186V5L556 0H516L511 5V490L174 330H172V1492ZM224 877V490H226L511 634V1017H509Z", "upm": 2048}};
+// ===== Noyau théorique (sans DOM) =====
+const FR=['Do','Ré','Mi','Fa','Sol','La','Si'];
+const SEMI=[0,2,4,5,7,9,11];
+const ALT={'1':'♯','-1':'♭','0':''};
+function N(str){ // "Fa#4" "Sib4" "Do5"
+  const m=/^(Do|Ré|Mi|Fa|Sol|La|Si)(#|b)?(\d)$/.exec(str);
+  return {s:FR.indexOf(m[1]),a:m[2]==='#'?1:m[2]==='b'?-1:0,o:+m[3]};
+}
+const dpos=n=>n.o*7+n.s;
+const midi=n=>12*(n.o+1)+SEMI[n.s]+n.a;
+const same=(x,y)=>x&&y&&x.s===y.s&&x.o===y.o&&x.a===y.a;
+function nameOf(n,withOct){return FR[n.s]+(n.a===1?'♯':n.a===-1?'♭':'')+(withOct?n.o:'');}
+const INTNAME=['unisson','2de','3ce','4te','5te','6te','7e','8ve'];
+function interval(lo,hi){ // lo/hi notes
+  const d=dpos(hi)-dpos(lo), st=midi(hi)-midi(lo);
+  return {d, st, simple:((d%7)+7)%7, num:((d%7)+7)%7+1};
+}
+function quality(lo,hi){ // 'P','I','D'
+  const {d,st}=interval(lo,hi); const s=((d%7)+7)%7, c=((st%12)+12)%12;
+  if(d<0) return 'X';
+  if((s===0&&c===0)||(s===4&&c===7)) return 'P';
+  if((s===2||s===5)&&[3,4,8,9].includes(c)) return 'I';
+  return 'D';
+}
+function intervalLabel(lo,hi){
+  const {d,st}=interval(lo,hi); const s=((d%7)+7)%7, c=((st%12)+12)%12;
+  if(d===0&&st===0) return 'unisson';
+  let base=s===0?'8ve':INTNAME[s];
+  if(s===4&&c===6) return '5te diminuée';
+  if(s===3&&c===6) return '4te augmentée';
+  if(d>7) base+=' (redoublée)';
+  return base;
+}
+function famLabel(q){return q==='P'?'consonance parfaite':q==='I'?'consonance imparfaite':'dissonance';}
+function motion(l1,l2,h1,h2){
+  const dl=dpos(l2)-dpos(l1)+(midi(l2)-midi(l1))*0.001, dh=dpos(h2)-dpos(h1)+(midi(h2)-midi(h1))*0.001;
+  if(dl===0&&dh===0) return 'aucun';
+  if(dl===0||dh===0) return 'oblique';
+  if((dl>0)!==(dh>0)) return 'contraire';
+  const i1=interval(l1,h1),i2=interval(l2,h2);
+  if(i1.simple===i2.simple) return 'parallèle';
+  return 'direct';
+}
+// ---- Vérification de la 1re espèce (contrepoint au-dessus) ----
+function checkFirstSpecies(cf,cp){
+  const R=[]; const n=cf.length;
+  const add=(m,level,msg)=>R.push({m,level,msg});
+  for(let k=0;k<n;k++) if(!cp[k]) add(k,'erreur','Mesure vide : place une note.');
+  if(R.length) return R;
+  for(let k=0;k<n;k++){
+    const iv=interval(cf[k],cp[k]); const q=quality(cf[k],cp[k]);
+    if(iv.d<0){add(k,'erreur','Croisement : le contrepoint passe sous le cantus.');continue;}
+    if(q==='D') add(k,'erreur','Dissonance ('+intervalLabel(cf[k],cp[k])+') : seules les consonances sont permises.');
+    if(iv.d>9) add(k,'conseil','Écart de plus d\'une 10e entre les voix : rapproche-les.');
+    if(k>0&&k<n-1&&iv.d===0) add(k,'erreur','Unisson au milieu de l\'exercice : réservé au début et à la fin.');
+  }
+  if(quality(cf[0],cp[0])!=='P') add(0,'erreur','Début : il faut une consonance parfaite (8ve, 5te ou unisson).');
+  const last=interval(cf[n-1],cp[n-1]);
+  if(!(last.simple===0&&((last.st%12)+12)%12===0)) add(n-1,'erreur','Fin : il faut une 8ve (ou un unisson).');
+  const pen=interval(cf[n-2],cp[n-2]);
+  if(dpos(cf[n-2])>dpos(cf[n-1])){
+    if(!(pen.simple===5&&((pen.st%12)+12)%12===9)) add(n-2,'erreur','Avant-dernière mesure : il faut une 6te majeure (la sensible qui monte sur la tonique).');
+  }
+  for(let k=1;k<n;k++){
+    const q=quality(cf[k],cp[k]); const mv=motion(cf[k-1],cf[k],cp[k-1],cp[k]);
+    const iv=interval(cf[k],cp[k]); const nm=iv.simple===0?'8ve':'5te';
+    if(q==='P'&&mv==='parallèle') add(k,'erreur',(nm==='8ve'?'8ves':'5tes')+' parallèles entre les mesures '+k+' et '+(k+1)+'.');
+    else if(q==='P'&&mv==='direct') add(k,'erreur',nm+' directe (cachée) : on arrive sur une consonance parfaite par mouvement direct.');
+    if(mv==='aucun') add(k,'erreur','Les deux voix répètent la même note : le contrepoint doit bouger.');
+    else if(same(cp[k],cp[k-1])) add(k,'conseil','Note répétée dans le contrepoint : à utiliser rarement.');
+    const md=dpos(cp[k])-dpos(cp[k-1]), ms=Math.abs(midi(cp[k])-midi(cp[k-1]));
+    if(ms===6) add(k,'erreur','Saut de triton dans la mélodie.');
+    else if(ms===10||ms===11) add(k,'erreur','Saut de 7e dans la mélodie.');
+    else if(ms>12) add(k,'erreur','Saut de plus d\'une octave.');
+    else if(Math.abs(md)===1&&ms===3) add(k,'erreur','Seconde augmentée dans la mélodie.');
+    else if(ms===9) add(k,'conseil','Saut de 6te majeure : à éviter en contrepoint strict.');
+    if(k>=2){
+      const p=dpos(cp[k-1])-dpos(cp[k-2]);
+      if(Math.abs(p)>=3&&(md===0||(md>0)===(p>0))) add(k,'conseil','Après un grand saut, repars dans l\'autre sens.');
+    }
+    if(k>=3){
+      const nums=[k-3,k-2,k-1,k].map(j=>interval(cf[j],cp[j]).simple);
+      if(nums.every(x=>x===nums[0])&&(nums[0]===2||nums[0]===5)) add(k,'conseil','Plus de trois '+(nums[0]===2?'3ces':'6tes')+' parallèles de suite.');
+    }
+  }
+  const body=cp; const top=Math.max(...body.map(dpos)); if(body.filter(x=>dpos(x)===top).length>1) add(body.findIndex(x=>dpos(x)===top),'conseil','Le point culminant apparaît plusieurs fois : vise une note la plus aiguë unique.');
+  let contr=0; for(let k=1;k<n;k++) if(motion(cf[k-1],cf[k],cp[k-1],cp[k])==='contraire') contr++;
+  if(contr<(n-1)/3) add(-1,'conseil','Peu de mouvement contraire : c\'est lui qui rend les voix indépendantes.');
+  return R;
+}
+// ---- Données ----
+const KEYS={Do:[],Sol:[{s:3,a:1}],Fa:[{s:6,a:-1}],La:[],'Ré':[]};
+const BANK=[
+ {id:'cf1',titre:'Cantus 1 · Do majeur',key:'Do',clef:'treble',cf:'Do4 Ré4 Mi4 Sol4 Fa4 Mi4 Ré4 Do4',sol:'Do5 La4 Sol4 Si4 Ré5 Do5 Si4 Do5'},
+ {id:'cf2',titre:'Cantus 2 · Do majeur',key:'Do',clef:'treble',cf:'Do4 Fa4 Mi4 La4 Sol4 Fa4 Mi4 Ré4 Do4',sol:'Do5 Ré5 Mi5 Do5 Si4 La4 Do5 Si4 Do5'},
+ {id:'cours',titre:'Cantus du cours · Do majeur',key:'Do',clef:'treble',cf:'Do4 Ré4 Fa4 Mi4 Sol4 Fa4 Mi4 Ré4 Do4',sol:'Do5 Si4 La4 Do5 Si4 Ré5 Sol4 Si4 Do5'},
+ {id:'cf3',titre:'Cantus 3 · Do majeur (long)',key:'Do',clef:'treble',cf:'Do4 Mi4 Fa4 Sol4 Mi4 La4 Sol4 Fa4 Mi4 Ré4 Do4',sol:'Do5 Si4 La4 Si4 Mi5 Do5 Si4 La4 Do5 Si4 Do5'},
+ {id:'cf4',titre:'Cantus 4 · Sol majeur',key:'Sol',clef:'bass',cf:'Sol3 Si3 La3 Ré4 Do4 Si3 La3 Sol3',sol:'Sol4 Fa#4 La4 Fa#4 Mi4 Ré4 Fa#4 Sol4'},
+ {id:'cf5',titre:'Cantus 5 · Fa majeur',key:'Fa',clef:'treble',cf:'Fa4 Ré4 Mi4 Fa4 La4 Sol4 Sib4 La4 Sol4 Fa4',sol:'Do5 Sib4 Sol4 La4 Do5 Mi5 Ré5 Do5 Mi5 Fa5'},
+ {id:'cf6',titre:'Cantus 6 · la mineur',key:'La',clef:'bass',cf:'La3 Do4 Si3 La3 Ré4 Do4 Si3 La3',sol:'La4 Sol4 Si4 Do5 La4 Mi4 Sol#4 La4'},
+ {id:'fux',titre:'Cantus de Fux · mode de Ré',key:'Ré',clef:'treble',cf:'Ré4 Fa4 Mi4 Ré4 Sol4 Fa4 La4 Sol4 Fa4 Mi4 Ré4',sol:'La4 La4 Sol4 La4 Si4 Do5 Do5 Si4 Ré5 Do#5 Ré5'},
+];
+const parseSeq=s=>s.split(' ').map(N);
+// ---- Vérification de la 2e espèce (blanches au-dessus ; les deux dernières mesures en rondes) ----
+function checkSecondSpecies(cf,M){
+  const R=[]; const n=cf.length; const add=(m,level,msg)=>R.push({m,level,msg});
+  for(let k=0;k<n;k++){const need=k>=n-2?1:2; const have=(M[k]||[]).filter(Boolean).length; if(have<need) add(k,'erreur','Mesure incomplète : '+(need===2?'place deux blanches.':'place une ronde.'));}
+  if(R.length) return R;
+  const flat=[]; M.forEach((m,k)=>m.forEach((x,j)=>flat.push({k,j,n:x})));
+  flat.forEach((f,i)=>{
+    const k=f.k, iv=interval(cf[k],f.n), q=quality(cf[k],f.n), lab=intervalLabel(cf[k],f.n);
+    if(iv.d<0){add(k,'erreur','Croisement : le contrepoint passe sous le cantus.');return;}
+    if(iv.d>9) add(k,'conseil','Écart de plus d\'une 10e entre les voix.');
+    if(f.j===0){
+      if(q==='D') add(k,'erreur','Temps fort dissonant ('+lab+') : le 1er temps doit être consonant.');
+      if(k>0&&k<n-1&&iv.d===0) add(k,'erreur','Unisson sur un temps fort au milieu de l\'exercice.');
+    } else {
+      if(iv.d===0) add(k,'conseil','Unisson sur le temps faible : à éviter.');
+      if(q==='D'){
+        const p=flat[i-1].n, nx=flat[i+1]&&flat[i+1].n; const a=dpos(f.n)-dpos(p), b=nx?dpos(nx)-dpos(f.n):0;
+        if(!(Math.abs(a)===1&&a===b)) add(k,'erreur','Dissonance ('+lab+') au temps faible qui n\'est pas une note de passage : elle doit relier deux notes par degrés, dans la même direction.');
+      }
+    }
+    if(i>0){
+      const p=flat[i-1].n, md=dpos(f.n)-dpos(p), ms=Math.abs(midi(f.n)-midi(p));
+      if(ms===0&&md===0) add(k,'erreur','Note répétée : en 2e espèce, le contrepoint ne répète pas une note.');
+      else if(ms===6) add(k,'erreur','Saut de triton dans la mélodie.');
+      else if(ms===10||ms===11) add(k,'erreur','Saut de 7e dans la mélodie.');
+      else if(ms>12) add(k,'erreur','Saut de plus d\'une octave.');
+      else if(Math.abs(md)===1&&ms===3) add(k,'erreur','Seconde augmentée dans la mélodie.');
+      if(i>1){const pp=dpos(flat[i-1].n)-dpos(flat[i-2].n); if(Math.abs(pp)>=3&&md!==0&&(md>0)===(pp>0)) add(k,'conseil','Après un grand saut, repars dans l\'autre sens.');}
+    }
+  });
+  if(quality(cf[0],M[0][0])!=='P') add(0,'erreur','Début : il faut une consonance parfaite (8ve, 5te ou unisson) sur le 1er temps.');
+  const last=interval(cf[n-1],M[n-1][0]); if(!(last.simple===0&&((last.st%12)+12)%12===0)) add(n-1,'erreur','Fin : il faut une 8ve (ou un unisson).');
+  const pen=interval(cf[n-2],M[n-2][0]);
+  if(dpos(cf[n-2])>dpos(cf[n-1])&&!(pen.simple===5&&((pen.st%12)+12)%12===9)) add(n-2,'erreur','Avant-dernière mesure : il faut une 6te majeure.');
+  for(let k=1;k<n;k++){
+    const a=M[k-1][0], b=M[k][0], w=M[k-1][M[k-1].length-1];
+    const qb=quality(cf[k],b); if(qb!=='P') continue;
+    const ib=interval(cf[k],b), ia=interval(cf[k-1],a), nm=ib.simple===0?'8ves':'5tes';
+    if(ia.simple===ib.simple&&quality(cf[k-1],a)==='P') add(k,'erreur',nm+' sur deux temps forts consécutifs : la blanche du milieu ne cache pas la faute.');
+    else { const mv=motion(cf[k-1],cf[k],w,b); if(mv==='parallèle'||mv==='direct') add(k,'erreur',(ib.simple===0?'8ve':'5te')+' atteinte par mouvement '+mv+' depuis le temps faible.'); }
+  }
+  const pass=flat.filter((f,i)=>f.j===1&&quality(cf[f.k],f.n)==='D').length;
+  if(pass===0) add(-1,'conseil','Aucune note de passage dissonante : essaie d\'en placer, c\'est tout l\'intérêt de la 2e espèce.');
+  const top=Math.max(...flat.map(f=>dpos(f.n))); const tops=flat.filter(f=>dpos(f.n)===top); if(tops.length>1) add(tops[0].k,'conseil','Le point culminant apparaît plusieurs fois.');
+  return R;
+}
+const SOL2={
+ cf1:'Do5 Si4 | La4 Fa4 | Sol4 La4 | Si4 Do5 | Ré5 Do5 | Sol4 La4 | Si4 | Do5',
+ cf2:'Do5 Si4 | La4 Ré5 | Do5 Si4 | Do5 Ré5 | Mi5 Si4 | Do5 La4 | Sol4 La4 | Si4 | Do5',
+ cours:'Do5 Si4 | La4 Fa4 | La4 Ré5 | Do5 Sol4 | Si4 Do5 | Ré5 Do5 | Sol4 La4 | Si4 | Do5',
+ cf3:'Sol4 La4 | Sol4 Si4 | La4 Do5 | Si4 La4 | Sol4 Si4 | Do5 Ré5 | Mi5 Si4 | Do5 La4 | Sol4 La4 | Si4 | Do5',
+ cf4:'Ré4 Mi4 | Sol4 Fa#4 | La4 Sol4 | Fa#4 Si4 | La4 Sol4 | Ré4 Mi4 | Fa#4 | Sol4',
+ cf5:'Fa4 Sol4 | La4 Sib4 | Do5 Sib4 | La4 Sib4 | Do5 Ré5 | Mi5 Fa5 | Sol5 Fa5 | Do5 Ré5 | Mi5 | Fa5',
+ cf6:'La4 Fa4 | Mi4 Fa4 | Sol4 Si4 | Do5 La4 | Fa4 Sol4 | La4 Mi4 | Sol#4 | La4',
+ fux:'La4 Si4 | La4 Ré5 | Do5 Si4 | Ré5 Fa5 | Mi5 Ré5 | La4 Si4 | Do5 Ré5 | Mi5 Ré5 | La4 Si4 | Do#5 | Ré5'};
+const parseMeas=s=>s.split(' | ').map(parseSeq);
+
+if(typeof module!=='undefined') module.exports={checkSecondSpecies,SOL2,parseMeas,N,dpos,midi,interval,quality,intervalLabel,motion,checkFirstSpecies,BANK,parseSeq,nameOf};
+
+</script>
+<script>
+// ===== Interface =====
+const $=id=>document.getElementById(id);
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const SP=10,H=SP/2;
+const BOTTOM={treble:30,bass:18};
+function glyph(name,x,y,size,color){
+  const g=GLYPH[name]; const k=size/g.upm;
+  return `<path d="${g.d}" transform="translate(${x} ${y}) scale(${k} ${-k})" fill="${color}"/>`;
+}
+// ---- Graveur ----
+// staves: [{clef, key:[{s,a}], events:[{t,d,n,color,ghost}], label}], beats total, bar length
+function engrave(opt){
+  const unit=opt.unit||16, bar=opt.bar||4, left=opt.key&&opt.key.length?84:70;
+  const W=Math.max(opt.minWidth||0,left+opt.beats*unit+18);
+  const gap=opt.gap||96, top0=opt.top0||46;
+  const ink=css('--staff'), muted=css('--muted');
+  let o=[];
+  const ys=opt.staves.map((s,i)=>top0+i*gap);
+  const endX=left+opt.beats*unit+4;
+  opt.staves.forEach((st,i)=>{
+    const top=ys[i];
+    for(let l=0;l<5;l++) o.push(`<line x1="16" y1="${top+l*SP}" x2="${endX}" y2="${top+l*SP}" stroke="${ink}" stroke-width="1"/>`);
+    if(st.clef==='treble') o.push(glyph('treble',20,top+31,40,ink)); else o.push(glyph('bass',22,top+32.5,34,ink));
+    let kx=58;
+    (opt.key||[]).forEach(k=>{
+      const pos=k.a===1?38:34; const p=pos-(st.clef==='treble'?0:14);
+      const y=top+4*SP-(p-BOTTOM[st.clef])*H;
+      o.push(glyph(k.a===1?'sharp':'flat',kx,y+5,15,ink)); kx+=12;
+    });
+    if(st.label) o.push(`<text x="${endX-10}" y="${top-9}" text-anchor="end" font-family="Atkinson Hyperlegible, sans-serif" font-size="11" fill="${muted}">${st.label}</text>`);
+  });
+  const sysTop=ys[0], sysBot=ys[ys.length-1]+4*SP;
+  o.push(`<line x1="16" y1="${sysTop}" x2="16" y2="${sysBot}" stroke="${ink}" stroke-width="1.3"/>`);
+  for(let b=bar;b<=opt.beats;b+=bar){
+    const x=left+b*unit-6;
+    if(b===opt.beats&&opt.final){o.push(`<line x1="${x-4}" y1="${sysTop}" x2="${x-4}" y2="${sysBot}" stroke="${ink}"/><line x1="${x}" y1="${sysTop}" x2="${x}" y2="${sysBot}" stroke="${ink}" stroke-width="3.5"/>`);}
+    else ys.forEach(top=>o.push(`<line x1="${x}" y1="${top}" x2="${x}" y2="${top+4*SP}" stroke="${ink}"/>`));
+  }
+  const keyAlt={}; (opt.key||[]).forEach(k=>keyAlt[k.s]=k.a);
+  opt.staves.forEach((st,i)=>{
+    const top=ys[i]; const mid=top+2*SP;
+    const evs=st.events.slice().sort((a,b)=>a.t-b.t);
+    let accState={}, curBar=-1;
+    const placed=[];
+    evs.forEach(e=>{
+      const col=e.color||ink;
+      const x=left+e.t*unit+(e.center?unit*Math.min(e.d,bar)/2-6:unit*0.5);
+      const barIdx=Math.floor(e.t/bar); if(barIdx!==curBar){accState={};curBar=barIdx;}
+      if(!e.n){ // rest
+        if(e.d>=4) o.push(`<rect x="${x-7}" y="${top+SP}" width="14" height="${H}" fill="${col}"/>`);
+        else if(e.d>=2) o.push(`<rect x="${x-7}" y="${top+2*SP-H}" width="14" height="${H}" fill="${col}"/>`);
+        else o.push(glyph(e.d>=1?'qrest':'erest',x-5,top+28,32,col));
+        return;
+      }
+      const n=e.n, p=dpos(n), bot=BOTTOM[st.clef], y=top+4*SP-(p-bot)*H;
+      for(let q=bot-2;q>=p;q-=2){const yy=top+4*SP-(q-bot)*H;o.push(`<line x1="${x-11}" y1="${yy}" x2="${x+11}" y2="${yy}" stroke="${ink}"/>`);}
+      for(let q=bot+10;q<=p;q+=2){const yy=top+4*SP-(q-bot)*H;o.push(`<line x1="${x-11}" y1="${yy}" x2="${x+11}" y2="${yy}" stroke="${ink}"/>`);}
+      const key=n.s+'_'+n.o; const prev=key in accState?accState[key]:(keyAlt[n.s]||0);
+      if(n.a!==prev){o.push(glyph(n.a===1?'sharp':n.a===-1?'flat':'natural',x-19,y+(n.a===-1?3:5),15,col));accState[key]=n.a;}
+      const op=e.ghost?' opacity="0.4"':'';
+      if(e.d>=4) o.push(`<ellipse cx="${x}" cy="${y}" rx="7" ry="4.6" fill="none" stroke="${col}" stroke-width="2.6" transform="rotate(-15 ${x} ${y})"${op}/>`);
+      else if(e.d>=2) o.push(`<ellipse cx="${x}" cy="${y}" rx="6" ry="4.2" fill="none" stroke="${col}" stroke-width="1.8" transform="rotate(-25 ${x} ${y})"${op}/>`);
+      else o.push(`<ellipse cx="${x}" cy="${y}" rx="6" ry="4.2" fill="${col}" transform="rotate(-25 ${x} ${y})"${op}/>`);
+      if(e.d<4) placed.push({x,y,d:e.d,col,t:e.t,up:y>=mid});
+    });
+    // stems & beams (croches par paires sur un temps)
+    for(let k=0;k<placed.length;k++){
+      const a=placed[k];
+      if(a.d===0.5&&placed[k+1]&&placed[k+1].d===0.5&&Math.floor(a.t+1e-9)===Math.floor(placed[k+1].t+1e-9)&&Math.abs(a.t%1)<1e-9){
+        const b=placed[k+1]; const up=(a.y+b.y)/2>=mid;
+        const xa=up?a.x+5.6:a.x-5.6, xb=up?b.x+5.6:b.x-5.6;
+        let ya=up?a.y-30:a.y+30, yb=up?b.y-30:b.y+30;
+        if(up){const m=Math.min(ya,yb); ya=Math.min(ya,m+4); yb=Math.min(yb,m+4);} else {const m=Math.max(ya,yb); ya=Math.max(ya,m-4); yb=Math.max(yb,m-4);}
+        o.push(`<line x1="${xa}" y1="${a.y}" x2="${xa}" y2="${ya}" stroke="${a.col}" stroke-width="1.3"/><line x1="${xb}" y1="${b.y}" x2="${xb}" y2="${yb}" stroke="${b.col}" stroke-width="1.3"/><line x1="${xa}" y1="${ya}" x2="${xb}" y2="${yb}" stroke="${a.col}" stroke-width="4.5"/>`);
+        k++; continue;
+      }
+      const sx=a.up?a.x+5.6:a.x-5.6, y2=a.up?a.y-32:a.y+32;
+      o.push(`<line x1="${sx}" y1="${a.y}" x2="${sx}" y2="${y2}" stroke="${a.col}" stroke-width="1.3"/>`);
+      if(a.d===0.5) o.push(a.up?`<path d="M${sx} ${y2} q 3 8 9 12 q 2 4 -1 10" fill="none" stroke="${a.col}" stroke-width="1.6"/>`:`<path d="M${sx} ${y2} q 3 -8 9 -12 q 2 -4 -1 -10" fill="none" stroke="${a.col}" stroke-width="1.6"/>`);
+    }
+  });
+  (opt.labels||[]).forEach(l=>{
+    const x=left+l.t*unit+(l.center?unit*2-6:unit*0.5);
+    o.push(`<text x="${x}" y="${sysBot+(l.dy||34)}" text-anchor="middle" font-family="Atkinson Hyperlegible, sans-serif" font-size="13" font-weight="700" fill="${l.color||muted}">${l.text}</text>`);
+  });
+  const Ht=sysBot+(opt.bottom||46);
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-width:${Math.round(W*(opt.zoom||1.7))}px" width="${W}" height="${Ht}" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${opt.aria||'Portée'}">${o.join('')}</svg>`;
+  return {svg,left,unit,ys,W};
+}
+// ---- Audio ----
+let AC=null;
+function audio(){ try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); return AC;}catch(e){return null;} }
+function hz(n){return 440*Math.pow(2,(midi(n)-69)/12);}
+function playNotes(list){ // [{n,t,d}] t,d en secondes
+  const ac=audio(); if(!ac) return; const t0=ac.currentTime+0.05;
+  list.forEach(x=>{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type='triangle'; o.frequency.value=hz(x.n);
+    const a=t0+x.t, e=a+x.d;
+    g.gain.setValueAtTime(0,a); g.gain.linearRampToValueAtTime(0.18,a+0.02); g.gain.exponentialRampToValueAtTime(0.06,a+Math.min(0.4,x.d*0.6)); g.gain.linearRampToValueAtTime(0.0001,e);
+    o.connect(g).connect(ac.destination); o.start(a); o.stop(e+0.05);
+  });
+}
+// ---- Scores ----
+const STORE='atelier-contrepoint-v1';
+let SC={quiz:[0,0],int:[0,0],mv:[0,0],rep:[0,0],esp:[0,0]};
+try{const s=JSON.parse(localStorage.getItem(STORE)||'null'); if(s) SC=Object.assign(SC,s);}catch(e){}
+function bump(k,ok){SC[k][1]++; if(ok) SC[k][0]++; try{localStorage.setItem(STORE,JSON.stringify(SC));}catch(e){} showScores();}
+function showScores(){
+  const tot=Object.values(SC).reduce((a,b)=>[a[0]+b[0],a[1]+b[1]],[0,0]);
+  $('globalScore').innerHTML=`Réponses justes : <b>${tot[0]}</b> sur <b>${tot[1]}</b>`;
+  $('intScore').textContent=`Score : ${SC.int[0]} / ${SC.int[1]}`;
+  $('mvScore').textContent=`Score : ${SC.mv[0]} / ${SC.mv[1]}`;
+}
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+
+// ===== Module 1 : 1re espèce =====
+const ESP={cf:null,cp:[],shown:null,item:null,result:null};
+function loadCF(id){
+  const it=BANK.find(b=>b.id===id)||BANK[0]; ESP.item=it; ESP.cf=parseSeq(it.cf); ESP.cp=new Array(ESP.cf.length).fill(null); ESP.result=null; ESP.ghost=null;
+  $('speciesFb').className='fb info';
+  $('speciesFb').innerHTML='Commence par la fin : une 8ve sur la dernière note, une 6te majeure juste avant. Puis le début (8ve ou 5te).';
+  drawSpecies();
+}
+function drawSpecies(){
+  const it=ESP.item, n=ESP.cf.length, unit=18;
+  const bad=new Set(), good=new Set();
+  if(ESP.result){ESP.result.filter(r=>r.level==='erreur'&&r.m>=0).forEach(r=>bad.add(r.m)); for(let k=0;k<n;k++) if(!bad.has(k)) good.add(k);}
+  const accent=css('--accent'), red=css('--red'), green=css('--green'), muted=css('--muted');
+  const cpEv=[]; ESP.cp.forEach((x,k)=>{ if(x) cpEv.push({t:k*4,d:4,n:x,center:true,color:bad.has(k)?red:(good.has(k)?green:accent)}); });
+  if(ESP.ghost&&!ESP.cp[ESP.ghost.k]) cpEv.push({t:ESP.ghost.k*4,d:4,n:ESP.ghost.n,center:true,color:accent,ghost:true});
+  const labels=[]; if(ESP.result) ESP.cp.forEach((x,k)=>{ if(x){const iv=interval(ESP.cf[k],x); const q=quality(ESP.cf[k],x); labels.push({t:k*4,center:true,text:iv.d===0?'1':(iv.simple===0?'8':String(iv.simple+1)),color:q==='P'?green:q==='I'?accent:red});}});
+  const res=engrave({staves:[{clef:'treble',events:cpEv,label:'Contrepoint'},{clef:it.clef,events:ESP.cf.map((x,k)=>({t:k*4,d:4,n:x,center:true,color:muted})),label:'Cantus firmus'}],key:KEYS[it.key],beats:n*4,unit,zoom:2.2,final:true,labels,gap:110,top0:56,aria:'Exercice de première espèce'});
+  ESP.geo=res; $('speciesStaff').innerHTML=res.svg;
+}
+function speciesPoint(ev){
+  const svg=$('speciesStaff').querySelector('svg'); if(!svg) return null;
+  const r=svg.getBoundingClientRect(); const x=(ev.clientX-r.left)*(svg.viewBox.baseVal.width/r.width), y=(ev.clientY-r.top)*(svg.viewBox.baseVal.height/r.height);
+  const g=ESP.geo; const k=Math.floor((x-g.left+6)/(g.unit*4)); if(k<0||k>=ESP.cf.length) return null;
+  const top=g.ys[0]; if(y<top-60||y>top+4*SP+40) return null;
+  const p=Math.round((top+4*SP-y)/H)+BOTTOM.treble; const o=Math.floor(p/7), s=((p%7)+7)%7;
+  if(p<dpos(N('Sol3'))||p>dpos(N('Do6'))) return null;
+  const ka=(KEYS[ESP.item.key].find(q=>q.s===s)||{a:0}).a;
+  return {k,n:{s,o,a:ka}};
+}
+function speciesClick(ev){
+  const pt=speciesPoint(ev); if(!pt) return;
+  const cur=ESP.cp[pt.k];
+  if(cur&&cur.s===pt.n.s&&cur.o===pt.n.o){ const cyc=[0,1,-1]; cur.a=cyc[(cyc.indexOf(cur.a)+1)%3]; }
+  else ESP.cp[pt.k]=pt.n;
+  ESP.result=null; ESP.ghost=null; drawSpecies(); playNotes([{n:ESP.cf[pt.k],t:0,d:0.7},{n:ESP.cp[pt.k],t:0,d:0.7}]);
+}
+function speciesHover(ev){const pt=speciesPoint(ev); const g=pt?{k:pt.k,n:pt.n}:null; const same=(a,b)=>a&&b&&a.k===b.k&&a.n.s===b.n.s&&a.n.o===b.n.o; if(same(g,ESP.ghost)||(!g&&!ESP.ghost)) return; ESP.ghost=g; drawSpecies();}
+function speciesCheck(){
+  const R=checkFirstSpecies(ESP.cf,ESP.cp); ESP.result=R; drawSpecies();
+  const errs=R.filter(r=>r.level==='erreur'), tips=R.filter(r=>r.level==='conseil');
+  const fb=$('speciesFb');
+  if(R.length&&R[0].msg.startsWith('Mesure vide')){fb.className='fb bad';fb.innerHTML=`<h4>Il manque des notes</h4>Remplis toutes les mesures avant de vérifier (${R.length} vide${R.length>1?'s':''}).`;ESP.result=null;drawSpecies();return;}
+  bump('esp',errs.length===0);
+  const li=r=>`<li><span class="pill ${r.level}">${r.level}</span><span>${r.m>=0?'<b>Mesure '+(r.m+1)+'</b> · ':''}${r.msg}</span></li>`;
+  if(!errs.length){fb.className='fb good';fb.innerHTML=`<h4>Bravo, aucune faute !</h4>${tips.length?'Quelques conseils pour aller plus loin :<ul class="issues">'+tips.map(li).join('')+'</ul>':'Ton contrepoint respecte toutes les règles de la 1re espèce. Écoute-le pour juger de sa beauté mélodique.'}`;}
+  else {fb.className='fb bad';fb.innerHTML=`<h4>${errs.length} faute${errs.length>1?'s':''} à corriger</h4><ul class="issues">${errs.concat(tips).sort((a,b)=>a.m-b.m).map(li).join('')}</ul>`;}
+}
+function speciesPlay(){
+  const list=[]; ESP.cf.forEach((x,k)=>{list.push({n:x,t:k*0.9,d:0.85}); if(ESP.cp[k]) list.push({n:ESP.cp[k],t:k*0.9,d:0.85});}); playNotes(list);
+}
+function speciesSolution(){
+  ESP.cp=parseSeq(ESP.item.sol); ESP.result=null; drawSpecies();
+  $('speciesFb').className='fb info';
+  const iv=ESP.cp.map((x,k)=>{const i=interval(ESP.cf[k],x);return i.d===0?'1':i.simple===0?'8':String(i.simple+1);});
+  $('speciesFb').innerHTML=`<h4>Une solution possible</h4>Intervalles : ${iv.join(' - ')}. Il en existe beaucoup d'autres : efface et essaie la tienne !`;
+}
+
+
+// ===== Module 1 bis : 2e espèce =====
+const E2={cf:null,cp:[],item:null,result:null,ghost:null};
+function loadCF2(id){
+  const it=BANK.find(b=>b.id===id)||BANK[0]; E2.item=it; E2.cf=parseSeq(it.cf); const n=E2.cf.length;
+  E2.cp=E2.cf.map((_,k)=>k>=n-2?[null]:[null,null]); E2.result=null; E2.ghost=null;
+  $('speciesFb2').className='fb info';
+  $('speciesFb2').innerHTML='Méthode : écris d\'abord les temps forts comme en 1re espèce (consonances, pas de 5tes ni d\'8ves consécutives), puis relie-les par des notes de passage.';
+  drawE2();
+}
+function drawE2(){
+  const it=E2.item, n=E2.cf.length, unit=18;
+  const bad=new Set(), good=new Set();
+  if(E2.result){E2.result.filter(r=>r.level==='erreur'&&r.m>=0).forEach(r=>bad.add(r.m)); for(let k=0;k<n;k++) if(!bad.has(k)) good.add(k);}
+  const accent=css('--accent'), red=css('--red'), green=css('--green'), muted=css('--muted');
+  const ev=[]; const lab=[];
+  E2.cp.forEach((m,k)=>m.forEach((x,j)=>{
+    const whole=m.length===1; const col=bad.has(k)?red:(good.has(k)?green:accent);
+    if(x) ev.push(whole?{t:k*4,d:4,n:x,center:true,color:col}:{t:k*4+j*2,d:2,n:x,color:col});
+    if(x&&E2.result){const iv=interval(E2.cf[k],x),q=quality(E2.cf[k],x); lab.push({t:whole?k*4:k*4+j*2,center:whole,text:iv.d===0?'1':(iv.simple===0?'8':String(iv.simple+1)),color:q==='P'?green:q==='I'?accent:red});}
+  }));
+  if(E2.ghost&&!E2.cp[E2.ghost.k][E2.ghost.j]){const whole=E2.cp[E2.ghost.k].length===1; ev.push(whole?{t:E2.ghost.k*4,d:4,n:E2.ghost.n,center:true,color:accent,ghost:true}:{t:E2.ghost.k*4+E2.ghost.j*2,d:2,n:E2.ghost.n,color:accent,ghost:true});}
+  const res=engrave({staves:[{clef:'treble',events:ev,label:'Contrepoint (2e espèce)'},{clef:it.clef,events:E2.cf.map((x,k)=>({t:k*4,d:4,n:x,center:true,color:muted})),label:'Cantus firmus'}],key:KEYS[it.key],beats:n*4,unit,zoom:2.2,final:true,labels:lab,gap:110,top0:56,aria:'Exercice de deuxième espèce'});
+  E2.geo=res; $('speciesStaff2').innerHTML=res.svg;
+}
+function e2Point(ev){
+  const svg=$('speciesStaff2').querySelector('svg'); if(!svg) return null;
+  const r=svg.getBoundingClientRect(); const x=(ev.clientX-r.left)*(svg.viewBox.baseVal.width/r.width), y=(ev.clientY-r.top)*(svg.viewBox.baseVal.height/r.height);
+  const g=E2.geo; const rel=(x-g.left+6)/(g.unit*4); const k=Math.floor(rel); if(k<0||k>=E2.cf.length) return null;
+  const j=E2.cp[k].length===1?0:((rel-k)<0.5?0:1);
+  const top=g.ys[0]; if(y<top-60||y>top+4*SP+40) return null;
+  const p=Math.round((top+4*SP-y)/H)+BOTTOM.treble; const o=Math.floor(p/7), s=((p%7)+7)%7;
+  if(p<dpos(N('Sol3'))||p>dpos(N('Do6'))) return null;
+  const ka=(KEYS[E2.item.key].find(q=>q.s===s)||{a:0}).a;
+  return {k,j,n:{s,o,a:ka}};
+}
+function e2Click(ev){
+  const pt=e2Point(ev); if(!pt) return;
+  const cur=E2.cp[pt.k][pt.j];
+  if(cur&&cur.s===pt.n.s&&cur.o===pt.n.o){const cyc=[0,1,-1]; cur.a=cyc[(cyc.indexOf(cur.a)+1)%3];}
+  else E2.cp[pt.k][pt.j]=pt.n;
+  E2.result=null; E2.ghost=null; drawE2(); playNotes([{n:E2.cf[pt.k],t:0,d:0.7},{n:E2.cp[pt.k][pt.j],t:0,d:0.7}]);
+}
+function e2Hover(ev){const pt=e2Point(ev); const g=pt?{k:pt.k,j:pt.j,n:pt.n}:null; const eq=(a,b)=>a&&b&&a.k===b.k&&a.j===b.j&&a.n.s===b.n.s&&a.n.o===b.n.o; if(eq(g,E2.ghost)||(!g&&!E2.ghost)) return; E2.ghost=g; drawE2();}
+function e2Check(){
+  const R=checkSecondSpecies(E2.cf,E2.cp); const fb=$('speciesFb2');
+  if(R.length&&R.every(r=>r.msg.startsWith('Mesure incomplète'))){fb.className='fb bad';fb.innerHTML=`<h4>Il manque des notes</h4>Complète toutes les mesures avant de vérifier (${R.map(r=>r.m+1).join(', ')}).`;return;}
+  E2.result=R; drawE2();
+  const errs=R.filter(r=>r.level==='erreur'), tips=R.filter(r=>r.level==='conseil');
+  bump('esp',errs.length===0);
+  const li=r=>`<li><span class="pill ${r.level}">${r.level}</span><span>${r.m>=0?'<b>Mesure '+(r.m+1)+'</b> · ':''}${r.msg}</span></li>`;
+  if(!errs.length){fb.className='fb good';fb.innerHTML=`<h4>Bravo, aucune faute !</h4>${tips.length?'Quelques conseils :<ul class="issues">'+tips.map(li).join('')+'</ul>':'Ton contrepoint respecte toutes les règles de la 2e espèce.'}`;}
+  else {fb.className='fb bad';fb.innerHTML=`<h4>${errs.length} faute${errs.length>1?'s':''} à corriger</h4><ul class="issues">${errs.concat(tips).sort((a,b)=>a.m-b.m).map(li).join('')}</ul>`;}
+}
+function e2Play(){const L=[],b=0.9; E2.cf.forEach((x,k)=>{L.push({n:x,t:k*b,d:b*0.95}); const m=E2.cp[k]; if(m.length===1){if(m[0])L.push({n:m[0],t:k*b,d:b*0.95});} else m.forEach((y,j)=>{if(y)L.push({n:y,t:k*b+j*b/2,d:b/2*0.95});});}); playNotes(L);}
+function e2Solution(){
+  E2.cp=parseMeas(SOL2[E2.item.id]); E2.result=null; drawE2();
+  const pass=[]; E2.cp.forEach((m,k)=>{if(m.length===2&&quality(E2.cf[k],m[1])==='D') pass.push(k+1);});
+  $('speciesFb2').className='fb info';
+  $('speciesFb2').innerHTML=`<h4>Une solution possible</h4>Notes de passage dissonantes aux mesures ${pass.join(', ')||'—'}. Clique sur « Vérifier » pour voir les intervalles. Il existe beaucoup d'autres solutions.`;
+}
+
+// ===== Module 2 : Quiz =====
+const QUIZ=[
+ {q:"Dans la méthode de Fux, comment s'appelle la mélodie donnée, sur laquelle on écrit le contrepoint ?",o:["Le cantus firmus","Le contre-sujet","La basse continue","Le thème"],a:0,e:"Le cantus firmus (« chant fixe ») est la mélodie en rondes sur laquelle on construit le contrepoint, espèce par espèce."},
+ {q:"Quels intervalles sont des consonances parfaites ?",o:["Unisson, 5te juste, 8ve","3ce et 6te","4te, 5te, 8ve","2de, 7e, 9e"],a:0,e:"Unisson, 5te et 8ve sont parfaites. Les 3ces et 6tes sont des consonances imparfaites. La 4te est traitée comme une dissonance entre deux voix."},
+ {q:"En contrepoint strict à deux voix, la quarte juste est considérée comme…",o:["Une dissonance","Une consonance parfaite","Une consonance imparfaite","Un intervalle interdit dans la mélodie"],a:0,e:"Entre deux voix, la quarte est une dissonance : elle est interdite en 1re espèce."},
+ {q:"Les deux voix montent, et l'intervalle passe d'une 3ce à une 5te. Quel est ce mouvement ?",o:["Direct","Parallèle","Contraire","Oblique"],a:0,e:"Même direction, intervalle différent : c'est le mouvement direct. Ici, il mène à une 5te : c'est une 5te directe, interdite."},
+ {q:"Comment doit-on arriver sur une 5te ou une 8ve ?",o:["Par mouvement contraire ou oblique","Par mouvement parallèle","Par mouvement direct","Peu importe"],a:0,e:"Règle d'or : jamais par mouvement direct ou parallèle, pour garder l'indépendance des voix."},
+ {q:"En 1re espèce, quel intervalle faut-il à l'avant-dernière mesure (contrepoint au-dessus) ?",o:["Une 6te majeure","Une 5te juste","Une 3ce mineure","Une 8ve"],a:0,e:"La 6te majeure s'ouvre sur l'octave finale : la sensible monte sur la tonique."},
+ {q:"Combien de 3ces ou de 6tes parallèles de suite au maximum ?",o:["Trois","Une seule","Deux","Autant qu'on veut"],a:0,e:"Au-delà de trois, les voix perdent leur indépendance : elles se collent l'une à l'autre."},
+ {q:"En 2e espèce, à quelle condition une blanche peut-elle être dissonante ?",o:["Sur le temps faible, si c'est une note de passage","Sur le temps fort, si elle est préparée","Jamais","Si elle forme une 4te"],a:0,e:"Le temps fort reste consonant. Le temps faible peut être dissonant s'il relie deux notes par degrés conjoints, dans la même direction."},
+ {q:"Qu'est-ce qu'une broderie ?",o:["On quitte une note par degré et on y revient (Ré-Mi-Ré)","Un saut de 3ce","Une note liée par-dessus la barre","Une gamme descendante"],a:0,e:"La broderie s'ajoute à la note de passage en 3e espèce."},
+ {q:"En 4e espèce, comment se résout un retard dissonant ?",o:["En descendant d'un degré","En montant d'un degré","Par un saut de 3ce","Il ne se résout pas"],a:0,e:"Préparation (consonante), retard (souvent dissonant), résolution descendante : 7 → 6 ou 4 → 3."},
+ {q:"Dans une imitation, comment s'appelle la voix qui reprend le motif ?",o:["Le conséquent","L'antécédent","Le cantus firmus","Le contre-sujet"],a:0,e:"L'antécédent expose le motif, le conséquent l'imite."},
+ {q:"Qu'est-ce qu'un canon ?",o:["Une imitation stricte et continue","Une imitation libre du début du motif","Une fugue sans sujet","Une mélodie lue à l'envers"],a:0,e:"Dans un canon, le conséquent reprend toute la mélodie de l'antécédent, note pour note (Frère Jacques)."},
+ {q:"Doubler les valeurs rythmiques d'un motif, c'est…",o:["L'augmentation","La diminution","Le renversement","Le rétrograde"],a:0,e:"Augmentation : croches → noires. Diminution : l'inverse."},
+ {q:"Si on échange deux voix à l'octave, que devient une 5te ?",o:["Une 4te","Une 6te","Une 5te","Une 3ce"],a:0,e:"Un intervalle et son renversement font 9 : 5 → 4. La 5te devient une dissonance, d'où la prudence en contrepoint renversable."},
+ {q:"Dans l'Invention n°1 de Bach, comment la main droite traite-t-elle le motif aux mesures 3-4 ?",o:["Renversé, en marche descendante","Augmenté","Rétrograde","Transposé à la 5te"],a:0,e:"Le motif renversé (La Sol Fa Mi Sol Fa La) descend d'une tierce à chaque demi-mesure."},
+ {q:"Dans une fugue, comment s'appelle le sujet repris à la dominante par la 2e voix ?",o:["La réponse","Le contre-sujet","Le divertissement","La strette"],a:0,e:"Sujet à la tonique, réponse à la dominante : c'est le couple de base de l'exposition."},
+ {q:"Quand la réponse est-elle tonale ?",o:["Quand le sujet commence par la dominante ou fait tout de suite un saut tonique-dominante","Quand le sujet est en mineur","Quand le sujet est chromatique","Toujours dans une fugue à 3 voix"],a:0,e:"On échange alors tonique et dominante dans la tête du sujet (Sol répond Do, Do répond Sol)."},
+ {q:"La Fugue en do mineur (BWV 847) commence par Do-Si-Do-Sol. Sa réponse commence par…",o:["Sol-Fa♯-Sol-Do","Sol-Fa♯-Sol-Ré","Do-Si-Do-Sol","Mi♭-Ré-Mi♭-Si♭"],a:0,e:"Réponse tonale : la quarte descendante Do-Sol devient une quinte descendante Sol-Do."},
+ {q:"Qu'est-ce qu'une strette ?",o:["Une nouvelle entrée du sujet avant la fin de la précédente","Un passage sans sujet","La fin de la fugue","Le contre-sujet renversé"],a:0,e:"La Fugue en Do majeur (BWV 846) en est remplie : les entrées se chevauchent parfois à un temps d'écart."},
+ {q:"Comment appelle-t-on, en français, un passage de fugue sans sujet complet, souvent en marche ?",o:["Un divertissement","Une codetta","Une coda","Une exposition"],a:0,e:"Le divertissement (ou épisode) module et prépare l'entrée suivante."},
+ {q:"Quelle est la particularité de la Fugue en mi mineur (BWV 855) ?",o:["C'est la seule fugue à deux voix du Clavier bien tempéré","Elle n'a pas de sujet","Elle est à cinq voix","Elle est entièrement en strette"],a:0,e:"Sa 2e moitié reprend la 1re avec les deux mains échangées."},
+ {q:"Une fugue en mineur qui finit sur un accord majeur utilise…",o:["La tierce picarde","Une cadence phrygienne","Une pédale de dominante","Un retard 4-3"],a:0,e:"Exemples : BWV 855 (Sol♯ final) et BWV 847 (Mi naturel final)."},
+ {q:"Lire un motif de la fin vers le début, c'est…",o:["Le rétrograde (écrevisse)","Le renversement","L'augmentation","La transposition"],a:0,e:"Le canon à l'écrevisse (cancrizans) de l'Offrande musicale superpose une mélodie et son rétrograde."},
+ {q:"Dans un contrepoint en miroir, on…",o:["Renverse toutes les voix à la fois","Échange seulement deux voix","Lit la partition à l'envers","Double toutes les valeurs"],a:0,e:"Les Contrapunctus 12 et 13 de L'Art de la fugue existent en version rectus et inversus."},
+ {q:"Pourquoi renverse-t-on autour de Ré pour garder la gamme de Do intacte ?",o:["Parce que la gamme de Do est symétrique autour de Ré","Parce que Ré est la sensible","Parce que Ré est la dominante de Sol","Par convention, sans raison"],a:0,e:"Ton-demi-ton-ton… se lit de la même façon dans les deux sens à partir de Ré : le miroir garde tons et demi-tons."},
+];
+let QZ={order:[],i:0,done:false};
+function quizStart(){QZ={order:shuffle(QUIZ.map((_,i)=>i)),i:0,good:0}; quizShow();}
+function quizShow(){
+  const tot=QZ.order.length;
+  if(QZ.i>=tot){$('qText').textContent=`Terminé ! ${QZ.good} bonne${QZ.good>1?'s':''} réponse${QZ.good>1?'s':''} sur ${tot}.`;$('qOpts').innerHTML='';$('qFb').hidden=true;$('qNext').hidden=true;$('qCount').textContent='';$('qBar').style.width='100%';return;}
+  const it=QUIZ[QZ.order[QZ.i]];
+  $('qCount').textContent=`Question ${QZ.i+1} sur ${tot} · ${QZ.good} juste${QZ.good>1?'s':''}`;
+  $('qBar').style.width=(QZ.i/tot*100)+'%';
+  $('qText').textContent=it.q;
+  const opts=shuffle(it.o.map((t,j)=>({t,j})));
+  $('qOpts').innerHTML=opts.map(x=>`<button type="button" data-j="${x.j}">${x.t}</button>`).join('');
+  $('qFb').hidden=true; $('qNext').hidden=true;
+  $('qOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const ok=+b.dataset.j===it.a; if(ok) QZ.good++; bump('quiz',ok);
+    $('qOpts').querySelectorAll('button').forEach(x=>{x.disabled=true; if(+x.dataset.j===it.a) x.classList.add('ok'); else if(x===b) x.classList.add('ko');});
+    $('qFb').hidden=false; $('qFb').className='fb '+(ok?'good':'bad'); $('qFb').innerHTML=`<h4>${ok?'Exact !':'Pas tout à fait.'}</h4>${it.e}`;
+    $('qNext').hidden=false; $('qNext').focus();
+  });
+}
+
+// ===== Module 3 : Intervalles =====
+let INT=null;
+const NAT=['Do4','Ré4','Mi4','Fa4','Sol4','La4','Si4'].map(N);
+function intNew(){
+  let lo,hi; const r=Math.random();
+  if(r<0.08){lo=N('Si4');hi=N('Fa5');} else if(r<0.14){lo=N('Fa4');hi=N('Si4');}
+  else { lo=rnd(NAT); const d=Math.floor(Math.random()*8); const p=dpos(lo)+d; hi={s:p%7,o:Math.floor(p/7),a:0}; }
+  INT={lo,hi,answered:false};
+  const res=engrave({staves:[{clef:'treble',events:[{t:0,d:4,n:lo,center:true},{t:0,d:4,n:hi,center:true}]}],beats:4,unit:40,minWidth:260,top0:40,bottom:30,aria:'Intervalle à reconnaître'});
+  $('intStaff').innerHTML=res.svg.replace(/(<ellipse[^>]*>)(?=[^]*<ellipse)/,'$1');
+  $('intFb').hidden=true;
+  const names=['unisson','2de','3ce','4te','5te','6te','7e','8ve'];
+  $('intOpts').innerHTML=names.map((t,i)=>`<button type="button" class="choice" data-i="${i}">${t}</button>`).join('');
+  $('intOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    if(INT.answered) return; INT.answered=true;
+    const iv=interval(lo,hi); const right=iv.d===7?7:iv.simple; const ok=+b.dataset.i===right; bump('int',ok);
+    $('intOpts').querySelectorAll('button').forEach(x=>{x.disabled=true; if(+x.dataset.i===right) x.classList.add('ok'); else if(x===b) x.classList.add('ko');});
+    const q=quality(lo,hi);
+    $('intFb').hidden=false; $('intFb').className='fb '+(ok?'good':'bad');
+    $('intFb').innerHTML=`<h4>${ok?'Exact !':'Non, regarde bien.'}</h4>${nameOf(lo)} – ${nameOf(hi)} : <b>${intervalLabel(lo,hi)}</b>, ${famLabel(q)}.${(q==='D'&&iv.simple===4)?' Attention : Si-Fa ne fait que 6 demi-tons, ce n\'est pas une 5te juste.':''}${(q==='D'&&iv.simple===3&&(midi(hi)-midi(lo))===6)?' C\'est le triton Fa-Si.':''}`;
+    intPlay();
+  });
+}
+function intPlay(){ if(!INT) return; playNotes([{n:INT.lo,t:0,d:0.6},{n:INT.hi,t:0.65,d:0.6},{n:INT.lo,t:1.35,d:1.1},{n:INT.hi,t:1.35,d:1.1}]); }
+
+// ===== Module 4 : Mouvements =====
+let MV=null;
+function mkN(p){return {s:((p%7)+7)%7,o:Math.floor(p/7),a:0};}
+function mvNew(){
+  const types=['contraire','direct','oblique','parallèle'];
+  const want=rnd(types); let l1,h1,l2,h2,tries=0;
+  do{
+    tries++;
+    const lp=dpos(N('Do4'))+Math.floor(Math.random()*5); const ivs=[2,4,5,7]; const i1=rnd(ivs);
+    l1=lp; h1=lp+i1; const st=rnd([1,2,-1,-2]);
+    if(want==='contraire'){l2=l1+st; h2=h1-st*rnd([1,2]);}
+    else if(want==='parallèle'){l2=l1+st; h2=h1+st;}
+    else if(want==='direct'){l2=l1+st; h2=h1+st+(st>0?1:-1)*rnd([1,2]);}
+    else {if(Math.random()<0.5){l2=l1; h2=h1+st;} else {l2=l1+st; h2=h1;}}
+  } while(tries<200 && (h2-l2<1||h2-l2>8||l2<dpos(N('La3'))||h2>dpos(N('Sol5'))||quality(mkN(l1),mkN(h1))==='D'||quality(mkN(l2),mkN(h2))==='D'||motion(mkN(l1),mkN(l2),mkN(h1),mkN(h2))!==want));
+  MV={l1:mkN(l1),h1:mkN(h1),l2:mkN(l2),h2:mkN(h2),step:1};
+  MV.type=motion(MV.l1,MV.l2,MV.h1,MV.h2);
+  const q2=quality(MV.l2,MV.h2); MV.forbidden=(q2==='P'&&(MV.type==='parallèle'||MV.type==='direct'));
+  const res=engrave({staves:[{clef:'treble',events:[{t:0,d:2,n:MV.l1},{t:0,d:2,n:MV.h1},{t:2,d:2,n:MV.l2},{t:2,d:2,n:MV.h2}].map(e=>Object.assign(e,{d:4,center:false}))}],beats:4,unit:52,minWidth:300,top0:40,bottom:30,aria:'Deux intervalles successifs'});
+  $('mvStaff').innerHTML=res.svg;
+  $('mvFb').hidden=true; $('mvOpts2').hidden=true;
+  $('mvOpts').innerHTML=types.map(t=>`<button type="button" class="choice" data-t="${t}">${t}</button>`).join('');
+  $('mvOpts').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    if(MV.step!==1) return; MV.step=2;
+    const ok=b.dataset.t===MV.type; bump('mv',ok);
+    $('mvOpts').querySelectorAll('button').forEach(x=>{x.disabled=true; if(x.dataset.t===MV.type) x.classList.add('ok'); else if(x===b) x.classList.add('ko');});
+    $('mvFb').hidden=false; $('mvFb').className='fb '+(ok?'good':'bad');
+    $('mvFb').innerHTML=`<h4>${ok?'Exact !':'Non.'}</h4>Mouvement <b>${MV.type}</b> : ${intervalLabel(MV.l1,MV.h1)} → ${intervalLabel(MV.l2,MV.h2)}. Maintenant : cet enchaînement est-il autorisé en contrepoint strict ?`;
+    $('mvOpts2').hidden=false;
+    $('mvOpts2').innerHTML=`<button type="button" class="choice" data-v="1">Autorisé</button><button type="button" class="choice" data-v="0">Interdit</button>`;
+    $('mvOpts2').querySelectorAll('button').forEach(c=>c.onclick=()=>{
+      if(MV.step!==2) return; MV.step=3;
+      const right=MV.forbidden?'0':'1'; const ok2=c.dataset.v===right; bump('mv',ok2);
+      $('mvOpts2').querySelectorAll('button').forEach(x=>{x.disabled=true; if(x.dataset.v===right) x.classList.add('ok'); else if(x===c) x.classList.add('ko');});
+      const why=MV.forbidden?`Interdit : on arrive sur une ${intervalLabel(MV.l2,MV.h2)} par mouvement ${MV.type} (${MV.type==='parallèle'?(interval(MV.l2,MV.h2).simple===0?'8ves':'5tes')+' parallèles':'consonance parfaite directe'}).`:(quality(MV.l2,MV.h2)==='P'?`Autorisé : on arrive sur la consonance parfaite par mouvement ${MV.type}.`:`Autorisé : on arrive sur une ${intervalLabel(MV.l2,MV.h2)}${quality(MV.l2,MV.h2)==='D'?' (dissonance : interdite en 1re espèce, mais le mouvement lui-même est correct)':''}.`);
+      $('mvFb').className='fb '+(ok2?'good':'bad');
+      $('mvFb').innerHTML=`<h4>${ok2?'Bien vu !':'Pas tout à fait.'}</h4>${why}`;
+    });
+  });
+}
+function mvPlay(){ if(!MV) return; playNotes([{n:MV.l1,t:0,d:0.9},{n:MV.h1,t:0,d:0.9},{n:MV.l2,t:1,d:1.2},{n:MV.h2,t:1,d:1.2}]); }
+
+// ===== Module 5 : Réponse de fugue =====
+const SUBJ=[
+ {titre:'Sujet en Do majeur',key:'Do',rh:[1,.5,.5,1,1,.5,.5,1,2],s:'Do5 Ré5 Mi5 Fa5 Mi5 Ré5 Do5 Si4 Do5',
+  c:[{n:'Sol4 La4 Si4 Do5 Si4 La4 Sol4 Fa#4 Sol4',ok:true},{n:'Sol4 La4 Si4 Do5 Si4 La4 Sol4 Fa4 Sol4',why:'C\'est une transposition qui reste en Do : il manque le Fa♯, sensible de Sol majeur.'},{n:'Fa4 Sol4 La4 Sib4 La4 Sol4 Fa4 Mi4 Fa4',why:'C\'est une transposition à la quarte supérieure (vers Fa), pas à la dominante.'}],
+  e:'Réponse réelle : le sujet commence sur la tonique et monte par degrés, sans saut tonique-dominante. On transpose exactement en Sol majeur, avec Fa♯.'},
+ {titre:'Sujet en Do majeur',key:'Do',rh:[1,1,.5,.5,.5,.5,1,1,2],s:'Sol4 Do5 Si4 La4 Sol4 Fa4 Mi4 Ré4 Do4',
+  c:[{n:'Do4 Sol4 Fa#4 Mi4 Ré4 Do4 Si3 La3 Sol3',ok:true},{n:'Ré4 Sol4 Fa#4 Mi4 Ré4 Do4 Si3 La3 Sol3',why:'C\'est la réponse réelle : Ré répond à Sol. Mais le sujet commence par la dominante : il faut une réponse tonale.'},{n:'Sol4 Do5 Si4 La4 Sol4 Fa4 Mi4 Ré4 Do4',why:'C\'est le sujet lui-même, pas une réponse à la dominante.'}],
+  e:'Réponse tonale : le sujet commence par Sol (dominante) puis Do. Dans la réponse, Do répond à Sol et Sol répond à Do. Le reste est transposé en Sol majeur.'},
+ {titre:'Sujet en la mineur',key:'La',rh:[1,1,.5,.5,1,1,1,2],s:'Mi4 La4 Si4 Do5 Si4 La4 Sol#4 La4',
+  c:[{n:'La3 Mi4 Fa#4 Sol4 Fa#4 Mi4 Ré#4 Mi4',ok:true},{n:'Si3 Mi4 Fa#4 Sol4 Fa#4 Mi4 Ré#4 Mi4',why:'Réponse réelle : Si répond à Mi. Or le sujet commence par la dominante (Mi) : la réponse doit être tonale.'},{n:'La3 Mi4 Fa4 Sol4 Fa4 Mi4 Ré4 Mi4',why:'La tête est bonne, mais la suite reste en la mineur : il manque Fa♯ et la sensible Ré♯ de mi mineur.'}],
+  e:'Réponse tonale : Mi-La (dominante → tonique) devient La-Mi. La suite passe en mi mineur, avec Fa♯ et la sensible Ré♯.'},
+ {titre:'Sujet en Sol majeur',key:'Sol',rh:[1,1,.5,.5,1,1,.5,.5,2],s:'Si4 Do5 Ré5 Si4 Sol4 La4 Si4 La4 Sol4',
+  c:[{n:'Fa#4 Sol4 La4 Fa#4 Ré4 Mi4 Fa#4 Mi4 Ré4',ok:true},{n:'Mi4 Fa#4 Sol4 Mi4 Do4 Ré4 Mi4 Ré4 Do4',why:'C\'est une transposition à la quarte inférieure vers Do : il faut aller à la dominante (Ré majeur).'},{n:'Fa#4 Sol4 La4 Fa#4 Sol4 Mi4 Fa#4 Mi4 Ré4',why:'Une note est fausse : le saut Si-Sol du sujet devient Fa♯-Ré, pas Fa♯-Sol.'}],
+  e:'Réponse réelle : le sujet commence sur la médiante (Si), sans saut tonique-dominante. Transposition exacte en Ré majeur.'},
+ {titre:'Sujet en ré mineur',key:'Ré',rh:[1,1,.5,.5,.5,.5,1,1,2],s:'La4 Ré5 Do#5 Ré5 Mi5 Fa5 Mi5 Do#5 Ré5',
+  c:[{n:'Ré4 La4 Sol#4 La4 Si4 Do5 Si4 Sol#4 La4',ok:true},{n:'Mi4 La4 Sol#4 La4 Si4 Do5 Si4 Sol#4 La4',why:'Réponse réelle : Mi répond à La. Le sujet commence par la dominante (La) : la réponse doit être tonale.'},{n:'Ré4 La4 Sol4 La4 Si4 Do5 Si4 Sol4 La4',why:'La tête est bonne, mais il manque la sensible de la mineur (Sol♯).'}],
+  e:'Réponse tonale : La-Ré (dominante → tonique) devient Ré-La. La suite passe en la mineur, avec la sensible Sol♯.'},
+ {titre:'Sujet en Fa majeur',key:'Fa',rh:[1,.5,.5,1,1,.5,.5,1,2],s:'Fa4 Sol4 La4 Sib4 La4 Sol4 Fa4 Mi4 Fa4',
+  c:[{n:'Do5 Ré5 Mi5 Fa5 Mi5 Ré5 Do5 Si4 Do5',ok:true},{n:'Do5 Ré5 Mi5 Fa5 Mi5 Ré5 Do5 Sib4 Do5',why:'Avec Si♭, on reste en Fa majeur : la sensible de Do majeur est Si naturel.'},{n:'Sib4 Do5 Ré5 Mib5 Ré5 Do5 Sib4 La4 Sib4',why:'C\'est une transposition à la quarte supérieure (vers Si♭), pas à la dominante.'}],
+  e:'Réponse réelle : pas de saut tonique-dominante au début. On transpose exactement en Do majeur : Si♭ devient Fa, Mi devient Si naturel.'},
+];
+let REP={order:[],i:0};
+function seqEvents(names,rh){let t=0;return parseSeq(names).map((n,k)=>{const e={t,d:rh[k],n};t+=rh[k];return e;});}
+function repStart(){REP={order:shuffle(SUBJ.map((_,i)=>i)),i:0};repShow();}
+function repShow(){
+  if(REP.i>=REP.order.length) REP={order:shuffle(SUBJ.map((_,i)=>i)),i:0};
+  const it=SUBJ[REP.order[REP.i]]; REP.cur=it; REP.answered=false;
+  $('repCount').textContent=`${it.titre} · sujet ${REP.i+1} sur ${REP.order.length}`;
+  const key=KEYS[it.key];
+  $('repSubject').innerHTML=engrave({staves:[{clef:'treble',events:seqEvents(it.s,it.rh),label:'Sujet'}],key,beats:8,unit:44,top0:40,bottom:24,final:true,aria:'Sujet de fugue'}).svg;
+  REP.cands=shuffle(it.c);
+  $('repCands').innerHTML=REP.cands.map((c,j)=>`<div class="cand"><button type="button" data-j="${j}" aria-label="Choisir la proposition ${'ABC'[j]}">${'ABC'[j]}</button><div class="staffwrap">${engrave({staves:[{clef:'treble',events:seqEvents(c.n,it.rh)}],key,beats:8,unit:44,top0:34,bottom:16,final:true,aria:'Proposition '+'ABC'[j]}).svg}</div></div>`).join('');
+  $('repFb').hidden=true;
+  $('repCands').querySelectorAll('.cand button').forEach(b=>b.onclick=()=>{
+    if(REP.answered) return; REP.answered=true;
+    const c=REP.cands[+b.dataset.j]; const ok=!!c.ok; bump('rep',ok);
+    $('repCands').querySelectorAll('.cand button').forEach(x=>{x.disabled=true; const cc=REP.cands[+x.dataset.j]; if(cc.ok) x.classList.add('ok'); else if(x===b) x.classList.add('ko');});
+    $('repFb').hidden=false; $('repFb').className='fb '+(ok?'good':'bad');
+    $('repFb').innerHTML=`<h4>${ok?'Exact !':'Non, ce n\'est pas cette proposition.'}</h4>${ok?'':c.why+'<br>'}${it.e}`;
+    const sub=seqEvents(it.s,it.rh), ans=seqEvents(REP.cands.find(x=>x.ok).n,it.rh), beat=0.42;
+    playNotes(sub.map(e=>({n:e.n,t:e.t*beat,d:e.d*beat*0.95})).concat(ans.map(e=>({n:e.n,t:(8+e.t)*beat,d:e.d*beat*0.95}))));
+  });
+}
+function repPlay(){const it=REP.cur; if(!it) return; const beat=0.42; playNotes(seqEvents(it.s,it.rh).map(e=>({n:e.n,t:e.t*beat,d:e.d*beat*0.95})));}
+
+// ===== Navigation =====
+const VIEWS=['espece','espece2','quiz','intervalles','mouvements','reponse'];
+function route(){
+  const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):'espece';
+  VIEWS.forEach(x=>{$('p-'+x).classList.toggle('on',x===v);});
+  document.querySelectorAll('#tabs a').forEach(a=>a.setAttribute('aria-current',a.getAttribute('href')==='#'+v?'page':'false'));
+}
+function start(){
+  $('cfSelect').innerHTML=BANK.map(b=>`<option value="${b.id}">${b.titre}</option>`).join('');
+  $('cfSelect').onchange=e=>loadCF(e.target.value);
+  loadCF(BANK[0].id);
+  const st=$('speciesStaff'); st.addEventListener('click',speciesClick); st.addEventListener('mousemove',speciesHover); st.addEventListener('mouseleave',()=>{if(ESP.ghost){ESP.ghost=null;drawSpecies();}});
+  $('btnCheck').onclick=speciesCheck; $('btnPlay').onclick=speciesPlay; $('btnSolution').onclick=speciesSolution;
+  $('btnClear').onclick=()=>{ESP.cp=ESP.cp.map(()=>null);ESP.result=null;drawSpecies();};
+  $('btnUndo').onclick=()=>{for(let k=ESP.cp.length-1;k>=0;k--) if(ESP.cp[k]){ESP.cp[k]=null;break;} ESP.result=null; drawSpecies();};
+  $('cfSelect2').innerHTML=BANK.map(b=>`<option value="${b.id}">${b.titre}</option>`).join('');
+  $('cfSelect2').onchange=e=>loadCF2(e.target.value); loadCF2(BANK[0].id);
+  const st2=$('speciesStaff2'); st2.addEventListener('click',e2Click); st2.addEventListener('mousemove',e2Hover); st2.addEventListener('mouseleave',()=>{if(E2.ghost){E2.ghost=null;drawE2();}});
+  $('btnCheck2').onclick=e2Check; $('btnPlay2').onclick=e2Play; $('btnSolution2').onclick=e2Solution;
+  $('btnClear2').onclick=()=>{E2.cp=E2.cp.map(m=>m.map(()=>null));E2.result=null;drawE2();};
+  $('btnUndo2').onclick=()=>{outer:for(let k=E2.cp.length-1;k>=0;k--) for(let j=E2.cp[k].length-1;j>=0;j--) if(E2.cp[k][j]){E2.cp[k][j]=null;break outer;} E2.result=null; drawE2();};
+  $('qRestart').onclick=quizStart; $('qNext').onclick=()=>{QZ.i++;quizShow();}; quizStart();
+  $('intNext').onclick=intNew; $('intPlay').onclick=intPlay; intNew();
+  $('mvNext').onclick=mvNew; $('mvPlay').onclick=mvPlay; mvNew();
+  $('repNext').onclick=()=>{REP.i++;repShow();}; $('repPlay').onclick=repPlay; repStart();
+  showScores(); route(); window.addEventListener('hashchange',route);
+  // redessiner si le thème change
+  try{ new MutationObserver(()=>{drawSpecies();drawE2();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']}); }catch(e){}
+}
+start();
+</script>
+</body>
+</html>
